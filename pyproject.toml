@@ -1,0 +1,22 @@
+[project]
+name = "pravoved"
+version = "0.1.0"
+description = "Правовед: локальный помощник по бытовому праву РФ (RAG + MCP)"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    "requests",
+    "beautifulsoup4",
+    "lxml",
+    "sentence-transformers",
+    "qdrant-client",
+    "rank-bm25",
+    "snowballstemmer",
+    "numpy",
+    "pytest",
+]
+
+[tool.setuptools]
+packages = ["pravoved", "pravoved.corpus", "pravoved.retrieval"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

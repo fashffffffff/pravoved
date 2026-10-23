@@ -5,3 +5,4 @@ __pycache__/
 .env
 data/index/
 .pytest_cache/
+data/cases.db
