@@ -16,6 +16,8 @@ MAX_RETRIES = 2
 MAX_SOURCES = 10
 MAX_TOOL_STEPS = 5
 SNIPPET = 1500
+# вопросы про расчёты отвечают инструменты, а не поиск; маленькие модели в grade часто путают их с вопросами вне базы
+CALC_WORDS = re.compile(r"ключев\w* ставк|неустойк|до какого числа|какого числа|когда (?:истека|законч)|компенсаци\w* за задержк", re.IGNORECASE)
 
 
 class State(TypedDict, total=False):
@@ -104,6 +106,8 @@ def build_graph(llm, tools):
             return {"enough": True, "retry": False, "out_of_scope": False, "usage": usage}
         out = bool(data.get("out_of_scope"))
         enough = bool(data.get("enough")) and not out
+        if CALC_WORDS.search(state["question"]):
+            out, enough = False, True
         update = {"enough": enough, "retry": False, "out_of_scope": out, "where": str(data.get("where") or ""), "usage": usage}
         new_query = str(data.get("query") or "").strip()
         if not enough and not out and state.get("retries", 0) < MAX_RETRIES and new_query:

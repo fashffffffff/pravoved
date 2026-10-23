@@ -28,15 +28,14 @@ def main():
     if not runs:
         print("в eval/results нет сохранённых прогонов (запустите answer_eval.py --tag ...)")
         return
+    # метрики строками, прогоны столбцами - так помещается много моделей
     table = Table()
-    table.add_column("прогон")
-    table.add_column("n")
-    for _, title in COLUMNS:
-        table.add_column(title, justify="right")
+    table.add_column("метрика")
     for r in runs:
-        m = r["metrics"]
-        n = "%s+%s" % (m.get("n_questions", 0), m.get("n_tool_cases", 0))
-        table.add_row(r["tag"], n, *[str(m.get(key, "-")) for key, _ in COLUMNS])
+        table.add_column(r["tag"], justify="right")
+    table.add_row("вопросов + tool-кейсов", *["%s+%s" % (r["metrics"].get("n_questions", 0), r["metrics"].get("n_tool_cases", 0)) for r in runs])
+    for key, title in COLUMNS:
+        table.add_row(title, *[str(r["metrics"].get(key, "-")) for r in runs])
     Console().print(table)
 
 

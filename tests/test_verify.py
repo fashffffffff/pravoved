@@ -61,3 +61,10 @@ def test_parse_json_with_noise():
 def test_hit_key():
     h = get_article("zozpp", "18")
     assert hit_key(h) == ("zozpp", "18", "")
+
+
+def test_calc_words():
+    from pravoved.agent.graph import CALC_WORDS
+    assert CALC_WORDS.search("Какая сейчас ключевая ставка Банка России?")
+    assert CALC_WORDS.search("Когда истекает срок?")
+    assert not CALC_WORDS.search("Как получить налоговый вычет за лечение зубов?")
