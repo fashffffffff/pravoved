@@ -12,11 +12,13 @@ dependencies = [
     "rank-bm25",
     "snowballstemmer",
     "numpy",
+    "mcp",
     "pytest",
 ]
 
 [tool.setuptools]
-packages = ["pravoved", "pravoved.corpus", "pravoved.retrieval"]
+packages = ["pravoved", "pravoved.corpus", "pravoved.retrieval", "pravoved.mcp_server"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+pythonpath = ["."]
