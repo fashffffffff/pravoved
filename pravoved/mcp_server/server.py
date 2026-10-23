@@ -81,12 +81,11 @@ def list_cases() -> list[dict]:
 @mcp.resource("law://{law}/{article}")
 def law_article(law: str, article: str) -> str:
     """Текст статьи закона, например law://zozpp/18"""
-    try:
-        from pravoved.retrieval import get_article
-    except ImportError:
-        return "Модуль поиска по законам (pravoved.retrieval) пока не подключён."
-    text = get_article(law, article)
-    return text or f"Статья {article} ({law}) не найдена."
+    from pravoved.retrieval.search import get_article
+    hit = get_article(law, article)
+    if hit is None:
+        return f"Статья {article} ({law}) не найдена."
+    return f"{hit.citation}. {hit.title}\n\n{hit.text}"
 
 
 @mcp.prompt()
