@@ -35,21 +35,24 @@ def get_key_rate(date: str | None = None) -> dict:
 
 @mcp.tool()
 def calc_consumer_penalty(price: float, days: int | None = None, kind: str = "goods_defect",
-                          start_date: str | None = None, end_date: str | None = None,
-                           paid: float | None = None) -> dict:
+                          due_date: str | None = None, actual_date: str | None = None,
+                          paid: float | None = None) -> dict:
     """Неустойка по Закону о защите прав потребителей.
     price - цена товара/услуги в рублях (для prepaid_delivery - сумма предоплаты).
-    days - число дней просрочки; вместо него можно передать start_date и end_date (ГГГГ-ММ-ДД),
-    тогда считаются дни от start_date (не включая) до end_date (включительно).
+    days - число дней просрочки, если оно известно из вопроса. Если в вопросе даты, передай вместо days:
+    due_date - последний день, когда требование должно было быть выполнено (срок доставки, срок ремонта,
+    последний день 10 дней на возврат денег), actual_date - когда фактически выполнили или сегодняшняя дата.
+    Обе даты бери из вопроса как есть (ГГГГ-ММ-ДД), не прибавляй и не отнимай дни: просрочка = actual_date - due_date.
+    Пример: привезти должны были 1 марта, привезли 11 марта - due_date 2026-03-01, actual_date 2026-03-11, это 10 дней.
     paid - сколько потребитель реально заплатил за товар, если отличается от price (например, часть цены или
     со скидкой): с 01.02.2026 неустойка по ст. 23 п. 1 не может быть больше уплаченной суммы (ФЗ № 500-ФЗ).
     Без paid потолком считается price.
     kind: goods_defect - 1% в день (ст. 23 п. 1), prepaid_delivery - 0,5% в день, не более суммы предоплаты (ст. 23.1 п. 3),
     service_delay - 3% в день, не более цены услуги (ст. 28 п. 5)."""
     if days is None:
-        if not (start_date and end_date):
-            raise ValueError("нужно указать days или start_date и end_date")
-        days = (date.fromisoformat(end_date) - date.fromisoformat(start_date)).days
+        if not (due_date and actual_date):
+            raise ValueError("нужно указать days или due_date и actual_date")
+        days = (date.fromisoformat(actual_date) - date.fromisoformat(due_date)).days
     return calc.penalty(price, days, kind, paid)
 
 
@@ -63,14 +66,15 @@ def calc_salary_delay(amount: float, due_date: str, paid_date: str) -> dict:
 
 
 @mcp.tool()
-def calc_deadline(start_date: str, days: int | None = None, kind: str = "custom", working_days: bool = False) -> dict:
+def calc_deadline(event_date: str, days: int | None = None, kind: str = "custom", working_days: bool = False) -> dict:
     """Срок исполнения требования.
-    start_date - дата, с которой течёт срок (ГГГГ-ММ-ДД, например дата вручения претензии).
+    event_date - дата события (покупки, передачи товара, вручения претензии) ровно как в вопросе, ГГГГ-ММ-ДД.
+    НЕ прибавляй к ней день: отсчёт со следующего дня делает сам инструмент.
     kind: demand_10 - 10 дней на удовлетворение требования (ст. 22 ЗоЗПП), exchange_14 - 14 дней на обмен
     товара надлежащего качества (ст. 25), complex_goods_15 - 15 дней для технически сложного товара (ст. 18),
     custom - свой срок в days. days можно указать и для остальных видов, он заменит стандартный.
     working_days=true - считать рабочие дни, иначе календарные. Если последний день нерабочий, срок переносится (ст. 193 ГК РФ)."""
-    return calc.deadline(date.fromisoformat(start_date), days, kind, working_days)
+    return calc.deadline(date.fromisoformat(event_date), days, kind, working_days)
 
 
 @mcp.tool()

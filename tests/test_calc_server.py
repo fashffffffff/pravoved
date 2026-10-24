@@ -26,3 +26,24 @@ def test_penalty_tool_paid_cap():
     assert res["penalty"] == "30000.00"
     assert res["capped"]
     assert calc_consumer_penalty(price=50000, days=10)["penalty"] == "5000.00"
+
+
+def test_penalty_tool_dates():
+    from pravoved.mcp_server.server import calc_consumer_penalty
+    # привезти должны были 1 марта, привезли 11 марта: 10 дней
+    res = calc_consumer_penalty(price=70000, kind="prepaid_delivery", due_date="2026-03-01", actual_date="2026-03-11")
+    assert res["days"] == 10
+    assert res["penalty"] == "3500.00"
+
+
+def test_penalty_tool_needs_days_or_dates():
+    import pytest
+    from pravoved.mcp_server.server import calc_consumer_penalty
+    with pytest.raises(ValueError):
+        calc_consumer_penalty(price=1000)
+
+
+def test_deadline_tool_counts_from_next_day():
+    from pravoved.mcp_server.server import calc_deadline
+    # куртка куплена 4 мая 2026, 14 дней: 18 мая (пн)
+    assert calc_deadline(event_date="2026-05-04", kind="exchange_14")["deadline"] == "2026-05-18"

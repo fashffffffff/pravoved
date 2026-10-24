@@ -43,12 +43,21 @@ def cited_keys(res):
     return {"%s:%s" % (s["law"], s["article"]) for s in res["sources"]}
 
 
+def normalize_args(args):
+    # одно и то же можно передать днями или датами, kind у своего срока можно не указывать
+    args = dict(args)
+    due, actual = args.pop("due_date", None), args.pop("actual_date", None)
+    if "days" not in args and due and actual:
+        args["days"] = (date.fromisoformat(actual) - date.fromisoformat(due)).days
+    if "event_date" in args and "kind" not in args:
+        args["kind"] = "custom"
+    return args
+
+
 def args_match(expected, got):
+    expected, got = normalize_args(expected), normalize_args(got)
     for key, want in expected.items():
-        if key == "days" and "days" not in got and got.get("start_date") and got.get("end_date"):
-            have = (date.fromisoformat(got["end_date"]) - date.fromisoformat(got["start_date"])).days
-        else:
-            have = got.get(key)
+        have = got.get(key)
         if isinstance(want, (int, float)):
             try:
                 if abs(float(have) - want) > 0.01:
