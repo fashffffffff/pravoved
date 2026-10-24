@@ -25,3 +25,11 @@ def test_source_list_marks_web():
     out = source_list([], web)
     assert out.startswith("[1] ВЕБ, доверие: official, https://consultant.ru/x, дата: 2026-01-01")
     assert "<<<\nтекст\n>>>" in out
+
+
+def test_web_enabled_env(monkeypatch):
+    from pravoved.agent.graph import web_enabled
+    monkeypatch.delenv("WEB_ENABLED", raising=False)
+    assert web_enabled()
+    monkeypatch.setenv("WEB_ENABLED", "false")
+    assert not web_enabled()
