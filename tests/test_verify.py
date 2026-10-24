@@ -97,3 +97,5 @@ def test_web_words():
     assert WEB_WORDS.search("Какой штраф для работодателя за задержку зарплаты?")
     assert WEB_WORDS.search("Что изменилось в ТК с 1 сентября 2026?")
     assert not WEB_WORDS.search("Телефон сломался через неделю, что делать?")
+    assert WEB_WORDS.search("Принят ли закон о четырёхдневной рабочей неделе?")
+    assert WEB_WORDS.search("Можно ли сейчас вернуть деньги за подписку?")
