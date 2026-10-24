@@ -60,6 +60,16 @@ def paragraphs(html):
     return out
 
 
+def last_change(html):
+    """Самая поздняя дата из пометок "(в ред. ...)" на странице, ISO. Нужна, когда в заголовке редакции нет"""
+    soup = BeautifulSoup(html, "lxml")
+    found = []
+    for tag in soup.select(".doc-edit, .doc-insert"):
+        for d, m, y in re.findall(r"(\d{2})\.(\d{2})\.(\d{4})", tag.get_text(" ")):
+            found.append(y + "-" + m + "-" + d)
+    return max(found) if found else ""
+
+
 def clean_title_line(line):
     # на странице заголовок вида "ТК РФ Статья 236. ..." / "Закон о ЗПП Статья 18. ..."
     return re.sub(r"^.*?(?=Статья \d)", "", line)
@@ -95,16 +105,21 @@ def download_articles(code, law_id):
     edition = edition_of(toc)
     links = article_links(toc, law_id)
     blocks = []
+    latest = ""
     for num, url in links.items():
         if not want_article(code, num):
             continue
-        lines = paragraphs(get("https://www.consultant.ru" + url))
+        html = get("https://www.consultant.ru" + url)
+        latest = max(latest, last_change(html))
+        lines = paragraphs(html)
         if not lines:
             print("пусто:", code, num)
             continue
         lines[0] = clean_title_line(lines[0])
         blocks.append("\n".join(lines))
         time.sleep(0.15)
+    if not edition and latest:
+        edition = "последняя поправка в тексте от " + latest
     return "\n\n".join(blocks), edition
 
 

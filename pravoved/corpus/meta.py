@@ -5,7 +5,8 @@ from pathlib import Path
 META = Path(__file__).resolve().parents[2] / "data" / "raw" / "meta.json"
 
 
-def load_meta(path=META):
+def load_meta(path=None):
+    path = path or META
     if not path.exists():
         return {}
     return json.loads(path.read_text(encoding="utf-8"))
