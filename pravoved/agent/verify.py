@@ -1,4 +1,5 @@
 import re
+from decimal import Decimal, InvalidOperation
 
 from pravoved.retrieval.search import get_article
 
@@ -86,3 +87,68 @@ def unverified_cited(answer, n_local, web):
             if 0 <= i < len(web) and web[i]["trust"] == "unverified":
                 count += 1
     return count
+
+
+NUM = r"\d{1,3}(?:[ \u00a0]\d{3})+(?:[.,]\d+)?|\d+(?:[.,]\d+)?"
+MONEY = re.compile(r"(%s)(?:\s*(?:до|-|–)\s*(%s))?(\s*тыс\.?)?\s*(?:₽|руб|р\.)" % (NUM, NUM), re.IGNORECASE)
+PERCENT = re.compile(r"(%s)\s*(?:%%|процент)" % NUM)
+MONTHS = ["января", "февраля", "марта", "апреля", "мая", "июня", "июля", "августа", "сентября", "октября",
+          "ноября", "декабря"]
+DATE_WORDS = re.compile(r"\b(\d{1,2})\s+(%s)(?:\s+(\d{4}))?" % "|".join(MONTHS), re.IGNORECASE)
+DATE_DOTS = re.compile(r"\b(\d{1,2})\.(\d{2})\.(\d{4})\b")
+DATE_ISO = re.compile(r"\b(\d{4})-(\d{2})-(\d{2})\b")
+
+
+def norm_num(s):
+    try:
+        d = Decimal(re.sub(r"\s", "", s).replace(",", "."))
+    except InvalidOperation:
+        return ""
+    return format(d.normalize(), "f")
+
+
+def day_key(day, month):
+    return "%02d-%02d" % (int(month), int(day))
+
+
+def find_dates(text):
+    # дата сравнивается без года: в ответе "18 мая" и "18.05.2026" - одна дата
+    found = {}
+    for m in DATE_WORDS.finditer(text):
+        found[day_key(m.group(1), MONTHS.index(m.group(2).lower()) + 1)] = m.group(0)
+    for d, m, y in DATE_DOTS.findall(text):
+        found[day_key(d, m)] = "%s.%s.%s" % (d, m, y)
+    for y, m, d in DATE_ISO.findall(text):
+        found[day_key(d, m)] = "%s.%s.%s" % (d, m, y)
+    return found
+
+
+def find_amounts(text):
+    """Суммы в рублях и проценты из текста: {нормализованное число: как написано}"""
+    found = {}
+    for m in MONEY.finditer(text):
+        for n in (m.group(1), m.group(2)):
+            if not n:
+                continue
+            value = norm_num(n)
+            if m.group(3) and value:
+                value = norm_num(str(Decimal(value) * 1000))
+            found[value] = m.group(0).strip()
+    for m in PERCENT.finditer(text):
+        found[norm_num(m.group(1))] = m.group(0).strip()
+    found.pop("", None)
+    return found
+
+
+def unbacked_numbers(answer, backing):
+    """Суммы, проценты и даты из ответа, которых нет в backing (вопрос, ответы инструментов, цитируемые источники)."""
+    have = {norm_num(n) for n in re.findall(NUM, backing)}
+    have |= {norm_num(n) for n in re.findall(r"\d+(?:[.,]\d+)?", backing)}
+    bad = [text for value, text in find_amounts(answer).items() if value not in have]
+    have_days = set(find_dates(backing))
+    bad += [text for key, text in find_dates(answer).items() if key not in have_days]
+    return bad
+
+
+def only_unverified(sources):
+    return bool(sources) and all(s["trust"] == "unverified" for s in sources)

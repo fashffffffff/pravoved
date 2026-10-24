@@ -1,5 +1,6 @@
 from pravoved.agent.graph import hit_key, parse_json
-from pravoved.agent.verify import article_numbers, check_citations, rules_points, unverified_cited
+from pravoved.agent.verify import (article_numbers, check_citations, find_amounts, find_dates, only_unverified,
+                                   rules_points, unbacked_numbers, unverified_cited)
 from pravoved.retrieval.search import get_article
 
 
@@ -137,3 +138,44 @@ def test_point_of_rules_does_not_confirm_article():
 def test_lists_exist_in_corpus():
     for law, article in [("pp657", "obmen"), ("pp657", "remont"), ("pp924", "perechen")]:
         assert get_article(law, article) is not None
+
+
+def test_find_amounts():
+    found = find_amounts("Неустойка 2 679,00 руб., штраф от 5 000 до 10 000 рублей, ставка 0,5% и 30 тыс. руб.")
+    assert set(found) == {"2679", "5000", "10000", "0.5", "30000"}
+    assert find_amounts("через 10 дней, ст. 23") == {}
+
+
+def test_find_dates():
+    assert set(find_dates("до 18 мая 2026, потом 01.06.2026 и 2026-07-03")) == {"05-18", "06-01", "07-03"}
+
+
+def test_amount_backed_by_tool():
+    tool = '{"penalty": "4800.00", "days": 12, "rate_per_day_percent": "1"}'
+    assert unbacked_numbers("Неустойка 4 800 ₽, это 1% в день.", tool) == []
+
+
+def test_amount_backed_by_question():
+    assert unbacked_numbers("Вы заплатили 40 000 рублей.", "Телефон за 40000 рублей сломался") == []
+    assert unbacked_numbers("Вы заплатили 40 000 рублей.", "Телефон за 40 000,00 руб. сломался") == []
+
+
+def test_amount_backed_by_source():
+    assert unbacked_numbers("Штраф до 50 000 рублей [1].", "штраф на должностных лиц от 1000 до 50000 рублей") == []
+
+
+def test_unbacked_amount_found():
+    bad = unbacked_numbers("Неустойка составит 9 999 руб. и 3% в день.", "цена 1000 рублей")
+    assert len(bad) == 2
+
+
+def test_date_backed_by_tool_without_year_shift():
+    tool = '{"deadline": "2026-05-18"}'
+    assert unbacked_numbers("Срок истекает 18 мая 2026.", tool) == []
+    assert unbacked_numbers("Срок истекает 19 мая 2026.", tool) == ["19 мая 2026"]
+
+
+def test_only_unverified():
+    assert only_unverified([{"trust": "unverified"}])
+    assert not only_unverified([{"trust": "unverified"}, {"trust": "local"}])
+    assert not only_unverified([])
