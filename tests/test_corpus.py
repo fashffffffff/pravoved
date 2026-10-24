@@ -1,6 +1,8 @@
 from pravoved.corpus.parse import (
     article_units, plenum_units, find_refs, build_refs, split_articles, make_unit,
+    point_units, list_units, section_text, list_body,
 )
+from pravoved.retrieval.store import citation
 
 TEXT = """Статья 18. Права потребителя при обнаружении недостатков
 1. Потребитель вправе потребовать замены товара.
@@ -64,3 +66,35 @@ def test_build_refs_only_known_articles():
         make_unit("zozpp", "19", "", "t", "текст"),
     ]
     assert build_refs(units) == [("zozpp:18", "zozpp:19")]
+
+
+def test_article_with_two_dots():
+    arts = split_articles("Статья 5.27.1. Охрана труда\n1. Текст\nСтатья 14.4. Продажа\nТекст")
+    assert [a[0] for a in arts] == ["5.27.1", "14.4"]
+
+
+def test_refs_koap():
+    assert find_refs("tk", "статьей 5.27 КоАП РФ") == [("koap", "5.27")]
+    assert find_refs("koap", "статьей 5.27.1 настоящего Кодекса") == [("koap", "5.27.1")]
+
+
+def test_point_units_title_is_section():
+    text = "## Правила\nУтверждены\n## Общие\n1. Первый\nещё строка\n2. Второй\n"
+    units = point_units("pp657", text)
+    assert [u["id"] for u in units] == ["pp657:1", "pp657:2"]
+    assert units[0]["title"] == "Общие"
+
+
+def test_list_units_single_piece():
+    text = "## Перечень\nУтвержден\nПЕРЕЧЕНЬ\n1. Телевизоры\n2. Холодильники\n"
+    body = list_body(section_text(text, "Перечень"))
+    units = list_units("pp924", "perechen", "Перечень", body)
+    assert [u["id"] for u in units] == ["pp924:perechen"]
+    assert units[0]["text"].startswith("1. Телевизоры")
+
+
+def test_citations_new_laws():
+    assert citation("koap", "5.27") == "КоАП РФ, ст. 5.27"
+    assert citation("pp657", "25") == "Правила продажи (ПП №657), п. 25"
+    assert citation("pp657", "obmen") == "Правила продажи (ПП №657), перечень товаров, не подлежащих обмену"
+    assert citation("pp924", "perechen") == "Перечень технически сложных товаров (ПП №924)"
