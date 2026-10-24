@@ -38,6 +38,7 @@ async def ask(graph, question, on_step=None):
         "cited": final.get("cited", 0),
         "invalid": final.get("invalid", 0),
         "unverified_cited": final.get("unverified_cited", 0),
+        "unbacked_numbers": final.get("unbacked_numbers", 0),
         "web_used": bool(final.get("web_sources")),
         "warning": final.get("warning"),
         "seconds": round(time.time() - start, 2),

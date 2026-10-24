@@ -90,7 +90,7 @@ def unverified_cited(answer, n_local, web):
 
 
 NUM = r"\d{1,3}(?:[ \u00a0]\d{3})+(?:[.,]\d+)?|\d+(?:[.,]\d+)?"
-MONEY = re.compile(r"(%s)(?:\s*(?:до|-|–)\s*(%s))?(\s*тыс\.?)?\s*(?:₽|руб|р\.)" % (NUM, NUM), re.IGNORECASE)
+MONEY = re.compile(r"(%s)(?:\s*(?:до|-|–)\s*(%s))?(\s*тыс\.?)?\s*(?:₽|руб\w*|р\.)" % (NUM, NUM), re.IGNORECASE)
 PERCENT = re.compile(r"(%s)\s*(?:%%|процент)" % NUM)
 MONTHS = ["января", "февраля", "марта", "апреля", "мая", "июня", "июля", "августа", "сентября", "октября",
           "ноября", "декабря"]

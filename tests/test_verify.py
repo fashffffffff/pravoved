@@ -179,3 +179,38 @@ def test_only_unverified():
     assert only_unverified([{"trust": "unverified"}])
     assert not only_unverified([{"trust": "unverified"}, {"trust": "local"}])
     assert not only_unverified([])
+
+
+def state_for(answer, web, question="вопрос"):
+    from pravoved.agent.graph import verify
+    return verify({"answer": answer, "hits": [], "web_sources": web, "tool_calls": [], "question": question,
+                   "regenerated": True})
+
+
+def test_only_unverified_sources_warning_on_top():
+    web = [{"trust": "unverified", "text": "текст", "url": "https://blog.example", "title": "блог"}]
+    res = state_for("Так делают [1].", web)
+    assert res["answer"].startswith("Официального подтверждения не найдено")
+    assert res["unverified_cited"] == 1
+
+
+def test_official_source_has_no_top_warning():
+    web = [{"trust": "official", "text": "текст", "url": "https://consultant.ru/x", "title": "закон"}]
+    res = state_for("Так делают [1].", web)
+    assert not res["answer"].startswith("Официального")
+    assert "warning" not in res
+
+
+def test_unbacked_number_warning():
+    web = [{"trust": "official", "text": "штраф 5000 рублей", "url": "https://consultant.ru/x", "title": "закон"}]
+    res = state_for("Штраф 5 000 рублей, а ещё 77 000 рублей [1].", web)
+    assert res["unbacked_numbers"] == 1
+    assert res["warning"].startswith("Проверьте цифры: 77 000 рублей")
+
+
+def test_needs_calc():
+    from pravoved.agent.graph import needs_calc
+    assert needs_calc("Какая сейчас ключевая ставка?")
+    assert needs_calc("Телефон за 40 000 рублей, магазин молчал 12 дней. Сколько мне положено?")
+    assert not needs_calc("Телефон за 40 000 рублей сломался, можно ли вернуть?")
+    assert not needs_calc("Как оформить возврат?")

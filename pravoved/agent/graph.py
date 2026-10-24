@@ -11,7 +11,7 @@ from langgraph.graph import END, StateGraph
 
 from pravoved.agent import prompts
 from pravoved.agent.tools import WEB_TOOLS
-from pravoved.agent.verify import check_citations, unverified_cited
+from pravoved.agent.verify import check_citations, only_unverified, unbacked_numbers, unverified_cited
 from pravoved.corpus.meta import corpus_date
 from pravoved.mcp_server.web import TRUST_ORDER
 from pravoved.retrieval.search import search
@@ -25,6 +25,10 @@ MAX_WEB_PAGES = 3
 SITES = " site:consultant.ru OR site:pravo.gov.ru OR site:garant.ru"
 # вопросы про расчёты отвечают инструменты, а не поиск; маленькие модели в grade часто путают их с вопросами вне базы
 CALC_WORDS = re.compile(r"ключев\w* ставк|неустойк|до какого числа|какого числа|когда (?:истека|законч)|компенсаци\w* за задержк", re.IGNORECASE)
+# деньги + сроки/даты + просьба посчитать: считать должен инструмент
+QUESTION_MONEY = re.compile(r"\d\s*(?:₽|руб|р\.|тыс)", re.IGNORECASE)
+QUESTION_TIME = re.compile(r"\d+\s*(?:дн|календарн|рабоч|недел|месяц)|\d{1,2}\s+(?:январ|феврал|март|апрел|ма[яй]|июн|июл|август|сентябр|октябр|ноябр|декабр)|\d{1,2}\.\d{2}\.\d{4}", re.IGNORECASE)
+QUESTION_ASK = re.compile(r"сколько|посчита|рассчита|подсчита|размер", re.IGNORECASE)
 # вопросы про свежие изменения и штрафы: локальная база их не знает, идём в интернет
 WEB_WORDS = re.compile(r"нов\w+ закон|(?:с|в) (?:\d+ \w+ )?20[2-9]\d|измени[лт]\w*|изменени\w*|\bсейчас\b|штраф|коап|принят\w* ли|законопроект", re.IGNORECASE)
 
@@ -41,6 +45,7 @@ class State(TypedDict, total=False):
     need_web: bool
     web_sources: list
     unverified_cited: int
+    unbacked_numbers: int
     where: str
     strict: bool
     regenerated: bool
@@ -114,16 +119,62 @@ def parse_json(text):
         return None
 
 
+def needs_calc(question):
+    if CALC_WORDS.search(question):
+        return True
+    return bool(QUESTION_MONEY.search(question) and QUESTION_TIME.search(question) and QUESTION_ASK.search(question))
+
+
 def tool_result_text(result):
     if isinstance(result, list):
         return "\n".join(b.get("text", "") if isinstance(b, dict) else str(b) for b in result)
     return str(result)
 
 
+def verify(state):
+    tool_text = "\n".join(c["result"] for c in state["tool_calls"])
+    hits = state["hits"]
+    web_sources = state.get("web_sources", [])
+    # статьи из официальных веб-страниц (например КоАП) тоже считаются подтверждёнными
+    tool_text += "\n" + "\n".join(w["text"] for w in web_sources if w["trust"] in ("official", "authority"))
+    text, cited, invalid, used = check_citations(state["answer"], hits, tool_text, len(web_sources))
+    sources = []
+    for n in used:
+        if n <= len(hits):
+            h = hits[n - 1]
+            sources.append({"n": n, "citation": h.citation, "law": h.law, "article": h.article, "trust": "local",
+                            "snippet": h.text[:200].replace("\n", " ")})
+        else:
+            w = web_sources[n - len(hits) - 1]
+            sources.append({"n": n, "citation": w["title"], "law": "web", "article": "", "trust": w["trust"],
+                            "url": w["url"], "date": w.get("date"), "snippet": w["text"][:200].replace("\n", " ")})
+    unverified = unverified_cited(text, len(hits), web_sources)
+    if not sources and not state["tool_calls"] and not state.get("regenerated"):
+        return {"strict": True, "regenerated": True, "again": True}
+    warnings = []
+    if not sources and not state["tool_calls"]:
+        warnings.append("В ответе нет подтверждённых ссылок на источники, проверьте его самостоятельно.")
+    if only_unverified(sources) or (not sources and only_unverified(web_sources)):
+        text = prompts.UNVERIFIED_TOP + "\n\n" + text
+    elif unverified:
+        warnings.append("В ответе есть ссылка на непроверенный сайт, это не официальный источник.")
+    backing = [state["question"], tool_text] + [hits[n - 1].text for n in used if n <= len(hits)]
+    backing += [web_sources[n - len(hits) - 1]["text"] for n in used if n > len(hits)]
+    unbacked = unbacked_numbers(text, "\n".join(backing))
+    if unbacked:
+        warnings.append("Проверьте цифры: " + ", ".join(unbacked) + " - их нет в источниках и расчётах.")
+    update = {"answer": text, "sources": sources, "cited": cited, "invalid": invalid, "again": False,
+              "unverified_cited": unverified, "unbacked_numbers": len(unbacked)}
+    if warnings:
+        update["warning"] = "\n".join(warnings)
+    return update
+
+
 def build_graph(llm, tools):
     tools_by_name = {t.name: t for t in tools}
     answer_tools = [t for t in tools if t.name not in WEB_TOOLS]
     llm_tools = llm.bind_tools(answer_tools) if answer_tools else llm
+    llm_forced = llm.bind_tools(answer_tools, tool_choice="required") if answer_tools else None
     web_on = web_enabled() and WEB_TOOLS <= set(tools_by_name)
 
     def retrieve(state):
@@ -227,12 +278,25 @@ def build_graph(llm, tools):
             system += prompts.STRICT_ADD
         user = prompts.ANSWER_USER.format(sources=source_list(hits, web_sources), question=state["question"])
         msgs = [SystemMessage(system), HumanMessage(user)]
+        force = needs_calc(state["question"])
+        text, calls, usage = await tool_loop(list(msgs), force)
+        if not calls:
+            # в ответе есть цифры, которых нет в источниках и вопросе, а инструмент не вызывали
+            backing = state["question"] + "\n" + source_list(hits, web_sources)
+            if unbacked_numbers(text, backing):
+                text2, calls2, usage2 = await tool_loop(msgs + [HumanMessage(prompts.CALC_NUDGE)], True)
+                usage += usage2
+                if calls2:
+                    text, calls = text2, calls2
+        return {"answer": text, "tool_calls": calls, "usage": usage}
+
+    async def tool_loop(msgs, force):
         calls = []
         usage = []
         text = ""
-        for _ in range(MAX_TOOL_STEPS):
+        for step in range(MAX_TOOL_STEPS):
             t = time.time()
-            msg = await llm_tools.ainvoke(msgs)
+            msg = await call_llm(msgs, force and step == 0)
             usage.append(usage_of(msg, time.time() - t))
             msgs.append(msg)
             text = strip_think(msg.content if isinstance(msg.content, str) else "")
@@ -242,7 +306,16 @@ def build_graph(llm, tools):
                 result = await run_tool(call)
                 calls.append({"name": call["name"], "args": call["args"], "result": result})
                 msgs.append(ToolMessage(content=result, tool_call_id=call["id"]))
-        return {"answer": text, "tool_calls": calls, "usage": usage}
+        return text, calls, usage
+
+    async def call_llm(msgs, force):
+        if force and llm_forced:
+            try:
+                return await llm_forced.ainvoke(msgs)
+            except Exception:
+                # сервер не поддерживает tool_choice, работаем как обычно
+                pass
+        return await llm_tools.ainvoke(msgs)
 
     async def run_tool(call):
         tool = tools_by_name.get(call["name"])
@@ -253,35 +326,6 @@ def build_graph(llm, tools):
         except Exception as e:
             # ошибку отдаём модели, пусть исправит аргументы
             return "Ошибка инструмента: %s" % e
-
-    def verify(state):
-        tool_text = "\n".join(c["result"] for c in state["tool_calls"])
-        hits = state["hits"]
-        web_sources = state.get("web_sources", [])
-        # статьи из официальных веб-страниц (например КоАП) тоже считаются подтверждёнными
-        tool_text += "\n" + "\n".join(w["text"] for w in web_sources if w["trust"] in ("official", "authority"))
-        text, cited, invalid, used = check_citations(state["answer"], hits, tool_text, len(web_sources))
-        sources = []
-        for n in used:
-            if n <= len(hits):
-                h = hits[n - 1]
-                sources.append({"n": n, "citation": h.citation, "law": h.law, "article": h.article, "trust": "local",
-                                "snippet": h.text[:200].replace("\n", " ")})
-            else:
-                w = web_sources[n - len(hits) - 1]
-                sources.append({"n": n, "citation": w["title"], "law": "web", "article": "", "trust": w["trust"],
-                                "url": w["url"], "date": w.get("date"), "snippet": w["text"][:200].replace("\n", " ")})
-        unverified = unverified_cited(text, len(hits), web_sources)
-        update = {"answer": text, "sources": sources, "cited": cited, "invalid": invalid, "again": False,
-                  "unverified_cited": unverified}
-        if unverified:
-            update["warning"] = "В ответе есть ссылка на непроверенный сайт, это не официальный источник."
-        if sources or state["tool_calls"]:
-            return update
-        if not state.get("regenerated"):
-            return {"strict": True, "regenerated": True, "again": True}
-        update["warning"] = "В ответе нет подтверждённых ссылок на источники, проверьте его самостоятельно."
-        return update
 
     def after_verify(state):
         return "answer" if state["again"] else "end"
