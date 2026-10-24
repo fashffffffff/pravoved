@@ -90,3 +90,13 @@ MCP-инструмент `web_search` ищет (SearXNG, если задан `SE
 Метрики: точность ссылок, неверные ссылки на ответ, попадание в нужную статью, ответы без ссылок,
 отказы вне базы и ложные отказы, выбор инструмента и его аргументы, время и токены в секунду.
 Сырые ответы и метрики лежат в `eval/results/TAG.json`.
+
+## Документы
+
+`pravoved/mcp_server/documents.py` (пока не подключено к MCP-серверу):
+
+- `make_calendar_event(title, date, description, remind_days_before)` - событие на целый день в `.ics` с напоминанием;
+- `draft_claim_docx(kind, data)` - досудебная претензия в `.docx` (`consumer_refund`, `consumer_penalty`, `salary_delay`).
+  Если не хватает обязательных полей, возвращает `{"error": "не хватает данных", "missing": [...]}`.
+
+Файлы пишутся в `data/out/` (в git не попадают).
