@@ -11,11 +11,15 @@ USER_AGENT = "Mozilla/5.0 (compatible; Pravoved/0.1; +local legal assistant)"
 
 # чем выше в списке, тем больше доверия; поддомены считаются тем же сайтом
 TRUST_DOMAINS = {
-    "official": ["pravo.gov.ru", "publication.pravo.gov.ru", "kremlin.ru", "government.ru", "vsrf.ru", "ksrf.ru",
-                 "consultant.ru", "garant.ru"],
+    "official": ["pravo.gov.ru", "publication.pravo.gov.ru", "kremlin.ru", "government.ru", "vsrf.ru", "ksrf.ru"],
     "authority": ["rospotrebnadzor.ru", "rostrud.gov.ru", "xn--80akibcicpdbetz7e2g.xn--p1ai", "cbr.ru",
                   "nalog.gov.ru", "sfr.gov.ru", "gosuslugi.ru"],
     "draft": ["sozd.duma.gov.ru", "regulation.gov.ru", "duma.gov.ru"],
+}
+# у консультанта и гаранта официальны только тексты документов, остальное (подборки, новости, статьи) - разъяснения
+DOCUMENT_PAGES = {
+    "consultant.ru": ("", "/document/"),
+    "garant.ru": ("base.garant.ru", "/products/ipo/prime/doc/"),
 }
 TRUST_ORDER = ["official", "authority", "draft", "unverified"]
 
@@ -30,8 +34,19 @@ def host_of(url):
         return host
 
 
+def is_document_page(url, site):
+    host = host_of(url)
+    doc_host, doc_path = DOCUMENT_PAGES[site]
+    if doc_host and (host == doc_host or host.endswith("." + doc_host)):
+        return True
+    return urlparse(url).path.startswith(doc_path)
+
+
 def trust_of(url):
     host = host_of(url)
+    for site in DOCUMENT_PAGES:
+        if host == site or host.endswith("." + site):
+            return "official" if is_document_page(url, site) else "authority"
     for level, domains in TRUST_DOMAINS.items():
         for d in domains:
             if host == d or host.endswith("." + d):

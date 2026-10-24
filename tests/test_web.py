@@ -33,3 +33,18 @@ def test_web_enabled_env(monkeypatch):
     assert web_enabled()
     monkeypatch.setenv("WEB_ENABLED", "false")
     assert not web_enabled()
+
+
+def test_document_pages_are_official():
+    assert trust_of("https://www.consultant.ru/document/cons_doc_LAW_305/") == "official"
+    assert trust_of("https://base.garant.ru/10106035/") == "official"
+    assert trust_of("https://www.garant.ru/products/ipo/prime/doc/70191362/") == "official"
+
+
+def test_editorial_pages_are_authority():
+    assert trust_of("https://www.consultant.ru/legalnews/12345/") == "authority"
+    assert trust_of("https://www.consultant.ru/law/podborki/shtraf/") == "authority"
+    assert trust_of("https://www.consultant.ru/law/hotdocs/") == "authority"
+    assert trust_of("https://www.garant.ru/news/1234567/") == "authority"
+    assert trust_of("https://www.garant.ru/article/1500000/") == "authority"
+    assert trust_of("https://www.consultant.ru/") == "authority"

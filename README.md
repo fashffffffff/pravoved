@@ -64,8 +64,10 @@ MCP-инструмент `web_search` ищет (SearXNG, если задан `SE
 
 У каждого сайта есть `trust` (списки доменов в `pravoved/mcp_server/web.py`, поддомены считаются):
 
-- official - тексты законов и суды (pravo.gov.ru, kremlin.ru, vsrf.ru, ksrf.ru, consultant.ru, garant.ru и др.);
-- authority - разъяснения госорганов (Роспотребнадзор, Роструд, ЦБ, ФНС, СФР, Госуслуги);
+- official - тексты законов и суды (pravo.gov.ru, kremlin.ru, vsrf.ru, ksrf.ru и др.) и страницы с текстом документа на consultant.ru (`/document/...`)
+  и garant.ru (`base.garant.ru`, `/products/ipo/prime/doc/`);
+- authority - разъяснения госорганов (Роспотребнадзор, Роструд, ЦБ, ФНС, СФР, Госуслуги) и редакционные
+  страницы консультанта и гаранта (подборки, новости, статьи): надёжное объяснение, но не текст закона;
 - draft - законопроекты (sozd.duma.gov.ru, regulation.gov.ru): в ответе подаются как «ещё не действует»;
 - unverified - всё остальное. Читаем их, только если нормальных источников меньше двух.
 
