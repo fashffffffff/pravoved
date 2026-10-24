@@ -1,5 +1,5 @@
 from pravoved.agent.graph import hit_key, parse_json
-from pravoved.agent.verify import article_numbers, check_citations, unverified_cited
+from pravoved.agent.verify import article_numbers, check_citations, rules_points, unverified_cited
 from pravoved.retrieval.search import get_article
 
 
@@ -99,3 +99,41 @@ def test_web_words():
     assert not WEB_WORDS.search("Телефон сломался через неделю, что делать?")
     assert WEB_WORDS.search("Принят ли закон о четырёхдневной рабочей неделе?")
     assert WEB_WORDS.search("Можно ли сейчас вернуть деньги за подписку?")
+
+
+def test_article_with_two_dots():
+    assert article_numbers("штраф по ст. 5.27.1 КоАП РФ и статье 5.27") == {"5.27.1", "5.27"}
+
+
+def test_koap_article_from_sources():
+    src = [get_article("koap", "5.27.1")]
+    _, cited, invalid, _ = check_citations("Штраф назначают по ст. 5.27.1 КоАП РФ [1].", src)
+    assert (cited, invalid) == (2, 0)
+    text, _, invalid, _ = check_citations("Ещё есть ст. 5.27.2.", src)
+    assert invalid == 1 and "[не подтверждено" in text
+
+
+def test_rules_points():
+    assert rules_points("по п. 25 Правил продажи и пункту 11 Правил продажи") == {"25", "11"}
+    assert rules_points("Правила продажи (ПП №657), п. 25") == {"25"}
+    assert rules_points("п. 25 договора") == set()
+
+
+def test_rules_point_checked():
+    src = [get_article("pp657", "25")]
+    text, _, invalid, _ = check_citations("Это следует из п. 25 Правил продажи [1].", src)
+    assert invalid == 0 and "не подтверждено" not in text
+    text, _, invalid, _ = check_citations("Это следует из п. 26 Правил продажи [1].", src)
+    assert invalid == 1 and "п. 26 Правил продажи [не подтверждено" in text
+
+
+def test_point_of_rules_does_not_confirm_article():
+    # п. 25 Правил продажи в источниках не делает верной ст. 25 ЗоЗПП
+    src = [get_article("pp657", "25")]
+    _, _, invalid, _ = check_citations("Обмен по ст. 25.", src)
+    assert invalid == 1
+
+
+def test_lists_exist_in_corpus():
+    for law, article in [("pp657", "obmen"), ("pp657", "remont"), ("pp924", "perechen")]:
+        assert get_article(law, article) is not None

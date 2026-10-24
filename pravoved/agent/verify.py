@@ -3,11 +3,23 @@ import re
 from pravoved.retrieval.search import get_article
 
 MARKER = re.compile(r"\[(\d+(?:\s*[,;]\s*\d+)*)\]")
-ARTICLE = re.compile(r"(?:\bст\.|\bстать[яиеёю]|\bстатьёй)\s*(\d+(?:\.\d+)?)", re.IGNORECASE)
+# номера бывают с несколькими точками: ст. 5.27.1 КоАП
+ARTICLE = re.compile(r"(?:\bст\.|\bстать[яиеёю]|\bстатьёй)\s*(\d+(?:\.\d+)*)", re.IGNORECASE)
+
+# пункты Правил продажи (ПП №657): "п. 25 Правил продажи" и "Правила продажи (ПП №657), п. 25"
+RULES = r"(?:Правил\w*\s+продажи|ПП\s*№?\s*657)"
+POINT_BEFORE = re.compile(r"(?:\bп\.|\bпункт\w*)\s*(\d+)\s*" + RULES, re.IGNORECASE)
+POINT_AFTER = re.compile(RULES + r"(?:\s*\(ПП\s*№?\s*657\))?,?\s*(?:п\.|пункт\w*)\s*(\d+)", re.IGNORECASE)
+# в этих документах единицы - пункты, а не статьи
+POINT_LAWS = ("plenum17", "pp657", "pp924")
 
 
 def article_numbers(text):
     return set(ARTICLE.findall(text))
+
+
+def rules_points(text):
+    return set(POINT_BEFORE.findall(text)) | set(POINT_AFTER.findall(text))
 
 
 def check_citations(answer, sources, tool_text="", n_web=0):
@@ -34,7 +46,7 @@ def check_citations(answer, sources, tool_text="", n_web=0):
     text = MARKER.sub(fix_marker, answer)
 
     # статьи по номеру: должны быть в найденных источниках (или в ответе инструмента) и существовать в базе
-    allowed = {s.article for s in sources if get_article(s.law, s.article)}
+    allowed = {s.article for s in sources if s.law not in POINT_LAWS and get_article(s.law, s.article)}
     allowed |= article_numbers(tool_text)
 
     def fix_article(m):
@@ -46,6 +58,20 @@ def check_citations(answer, sources, tool_text="", n_web=0):
         return m.group(0) + " [не подтверждено источниками]"
 
     text = ARTICLE.sub(fix_article, text)
+
+    # пункты Правил продажи: должны быть среди найденных и существовать в базе
+    points = {s.article for s in sources if s.law == "pp657" and get_article("pp657", s.article)}
+
+    def fix_point(m):
+        nonlocal cited, invalid
+        cited += 1
+        if m.group(1) in points:
+            return m.group(0)
+        invalid += 1
+        return m.group(0) + " [не подтверждено источниками]"
+
+    text = POINT_BEFORE.sub(fix_point, text)
+    text = POINT_AFTER.sub(fix_point, text)
     text = re.sub(r"[ \t]+([.,;])", r"\1", text)
     return text, cited, invalid, sorted(used)
 
