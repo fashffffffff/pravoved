@@ -84,7 +84,7 @@ async def run_all(graph, items, kind):
             print("  ошибка:", e)
             res = {"error": str(e), "answer": "", "refused": False, "sources": [], "tool_calls": [],
                    "cited": 0, "invalid": 0, "seconds": 0, "tokens_per_sec": None,
-                   "unverified_cited": 0, "web_used": False}
+                   "unverified_cited": 0, "unbacked_numbers": 0, "web_used": False}
         res["case"] = item
         out.append(res)
     return out
@@ -101,13 +101,19 @@ def metrics(q_runs, t_runs):
         m["citation_precision"] = round((cited - sum(r["invalid"] for r in answered)) / cited, 3) if cited else None
         m["invalid_per_answer"] = mean([r["invalid"] for r in answered])
         m["no_citation_answers"] = sum(1 for r in answered if not r["sources"])
+        m["unbacked_numbers_per_answer"] = mean([r.get("unbacked_numbers", 0) for r in answered])
         hits = [[e in cited_keys(r) for e in r["case"]["expected"]] for r in answered]
         m["expected_hit_any"] = mean([any(h) for h in hits])
         m["expected_recall"] = mean([sum(h) / len(h) for h in hits])
     if in_scope:
         m["false_refusal_rate"] = mean([r["refused"] for r in in_scope])
-    if out_scope:
-        m["refusal_on_out_of_scope"] = mean([r["refused"] for r in out_scope])
+    # вне базы: нужно отказать (не право, уголовное) или можно ответить по официальным сайтам (web_ok)
+    must_refuse = [r for r in out_scope if r["case"].get("expect", "refuse") == "refuse"]
+    web_ok = [r for r in out_scope if r["case"].get("expect") == "web_ok"]
+    if must_refuse:
+        m["refusal_on_out_of_scope"] = mean([r["refused"] for r in must_refuse])
+    if web_ok:
+        m["web_ok_answered"] = mean([not r["refused"] for r in web_ok])
     checks = [check_tool_case(r["case"], r) for r in t_runs if "error" not in r]
     if checks:
         m["tool_selection_acc"] = mean([c["tool_ok"] for c in checks])
