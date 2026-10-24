@@ -5,11 +5,25 @@ from pravoved.mcp_server.key_rate import key_rate_periods
 
 KOPECK = Decimal("0.01")
 
-# kind -> (доля цены в день, ограничение суммой цены, основание)
+# kind -> (доля цены в день, основание, чем ограничена сумма)
+# с 01.02.2026 (ФЗ от 28.12.2025 N 500-ФЗ) неустойка по ст. 23 тоже ограничена
 PENALTY_KINDS = {
-    "goods_defect": (Decimal("0.01"), False, "ст. 23 п. 1 Закона о защите прав потребителей (за нарушение сроков по ст. 20, 21, 22)"),
-    "prepaid_delivery": (Decimal("0.005"), True, "ст. 23.1 п. 3 Закона о защите прав потребителей"),
-    "service_delay": (Decimal("0.03"), True, "ст. 28 п. 5 Закона о защите прав потребителей"),
+    "goods_defect": (
+        Decimal("0.01"),
+        "ст. 23 п. 1 Закона о защите прав потребителей (за нарушение сроков по ст. 20, 21, 22); "
+        "сумма неустойки не может превышать сумму, уплаченную потребителем за товар",
+        "ограничено суммой, уплаченной за товар",
+    ),
+    "prepaid_delivery": (
+        Decimal("0.005"),
+        "ст. 23.1 п. 3 Закона о защите прав потребителей",
+        "ограничено суммой предварительной оплаты",
+    ),
+    "service_delay": (
+        Decimal("0.03"),
+        "ст. 28 п. 5 Закона о защите прав потребителей",
+        "ограничено ценой работы (услуги)",
+    ),
 }
 
 
@@ -17,22 +31,25 @@ def money(x) -> Decimal:
     return Decimal(x).quantize(KOPECK, rounding=ROUND_HALF_UP)
 
 
-def penalty(price, days: int, kind: str) -> dict:
+def penalty(price, days: int, kind: str, paid=None) -> dict:
     if kind not in PENALTY_KINDS:
         raise ValueError(f"неизвестный kind: {kind}, допустимо: {', '.join(PENALTY_KINDS)}")
     if days < 0:
         raise ValueError("days не может быть отрицательным")
     price = Decimal(str(price))
-    share, capped, basis = PENALTY_KINDS[kind]
+    share, basis, cap_note = PENALTY_KINDS[kind]
+    # потолок - уплаченная сумма, а если её не передали, то цена
+    cap = money(Decimal(str(paid)) if paid is not None else price)
     raw = money(price * share * days)
-    total = min(raw, money(price)) if capped else raw
+    total = min(raw, cap)
     breakdown = f"{price} x {share * 100}% x {days} дн. = {raw}"
-    if capped and raw > total:
-        breakdown += f"; неустойка не может превышать сумму {money(price)}, поэтому {total}"
+    if raw > total:
+        breakdown += f"; {cap_note} ({cap}), поэтому {total}"
     return {
         "penalty": str(total),
         "uncapped": str(raw),
         "capped": total != raw,
+        "cap": str(cap),
         "days": days,
         "rate_per_day_percent": str(share * 100),
         "breakdown": breakdown,

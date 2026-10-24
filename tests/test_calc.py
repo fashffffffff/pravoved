@@ -55,10 +55,20 @@ def test_penalty_goods_defect():
     assert not res["capped"]
 
 
-def test_penalty_goods_defect_not_capped():
-    # для ст. 23 ограничения ценой в самой норме нет (200 дней * 1% = 200% цены)
+def test_penalty_goods_defect_capped():
+    # с 01.02.2026 неустойка по ст. 23 не больше уплаченной суммы: 200 дней * 1% = 200% цены -> 1000
     res = calc.penalty(1000, 200, "goods_defect")
-    assert res["penalty"] == "2000.00"
+    assert res["penalty"] == "1000.00"
+    assert res["uncapped"] == "2000.00"
+    assert res["capped"]
+    assert "ограничено суммой, уплаченной за товар" in res["breakdown"]
+
+
+def test_penalty_goods_defect_paid_less_than_price():
+    # цена 20000, но заплачено 15000 (скидка, часть оплачена бонусами): потолок 15000
+    res = calc.penalty(20000, 100, "goods_defect", paid=15000)
+    assert res["penalty"] == "15000.00"
+    assert res["cap"] == "15000.00"
 
 
 def test_penalty_prepaid_cap():
