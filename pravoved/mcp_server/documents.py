@@ -77,14 +77,17 @@ def ics_fold(line: str) -> str:
 def parse_date(value) -> date:
     if isinstance(value, date):
         return value
-    return date.fromisoformat(str(value))
+    text = str(value).strip()
+    if re.fullmatch(r"\d{1,2}\.\d{1,2}\.\d{4}", text):
+        return datetime.strptime(text, "%d.%m.%Y").date()
+    return date.fromisoformat(text)
 
 
 def make_calendar_event(title, date, description="", remind_days_before=1, out_dir="data/out") -> dict:
     try:
         day = parse_date(date)
     except ValueError:
-        return {"error": "дата должна быть в формате ГГГГ-ММ-ДД"}
+        return {"error": "дата должна быть в формате ГГГГ-ММ-ДД или ДД.ММ.ГГГГ"}
     if remind_days_before < 0:
         return {"error": "remind_days_before не может быть отрицательным"}
 
@@ -127,6 +130,11 @@ def draft_claim_docx(kind, data, out_dir="data/out") -> dict:
     if missing:
         return {"error": "не хватает данных", "missing": missing}
 
+    try:
+        claim_date = parse_date(data["date"])
+    except ValueError:
+        return {"error": "дата должна быть в формате ДД.ММ.ГГГГ или ГГГГ-ММ-ДД"}
+
     info = CLAIM_KINDS[kind]
     answer_days = data.get("answer_days") or 10
     # (текст, выравнивание, жирный)
@@ -166,7 +174,7 @@ def draft_claim_docx(kind, data, out_dir="data/out") -> dict:
             blocks.append((f"{i}. {name}", "left", False))
 
     blocks.append(("", "left", False))
-    blocks.append((f"{data['date']}                    ______ / {data['sender_name']}", "left", False))
+    blocks.append((f"{claim_date:%d.%m.%Y}                    ______ / {data['sender_name']}", "left", False))
 
     doc = Document()
     doc.styles["Normal"].font.name = "Times New Roman"
@@ -180,8 +188,7 @@ def draft_claim_docx(kind, data, out_dir="data/out") -> dict:
 
     out = Path(out_dir)
     out.mkdir(parents=True, exist_ok=True)
-    safe_date = re.sub(r"[^0-9A-Za-zА-Яа-я_-]+", "-", str(data["date"])).strip("-")
-    path = out / f"claim_{kind}_{safe_date}.docx"
+    path = out / f"claim_{kind}_{claim_date.isoformat()}.docx"
     doc.save(path)
 
     preview = "\n".join(text for text, _, _ in blocks)

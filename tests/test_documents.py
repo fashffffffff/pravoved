@@ -40,6 +40,18 @@ def test_claim_kinds(tmp_path, kind, articles):
     assert res["legal_basis"]
 
 
+@pytest.mark.parametrize("value", ["2026-10-24", "24.10.2026"])
+def test_claim_date_russian_format(tmp_path, value):
+    res = draft_claim_docx("consumer_refund", {**DATA, "date": value}, out_dir=str(tmp_path))
+    assert "24.10.2026" in res["preview"]
+    assert "2026-10-24" not in res["preview"]
+
+
+def test_claim_bad_date(tmp_path):
+    res = draft_claim_docx("consumer_refund", {**DATA, "date": "завтра"}, out_dir=str(tmp_path))
+    assert "error" in res
+
+
 def test_claim_missing_fields(tmp_path):
     data = {k: v for k, v in DATA.items() if k not in ("facts", "demand")}
     res = draft_claim_docx("consumer_refund", data, out_dir=str(tmp_path))
@@ -68,4 +80,4 @@ def test_ics(tmp_path):
 
 
 def test_ics_bad_date(tmp_path):
-    assert "error" in make_calendar_event("x", "11.11.2026", out_dir=str(tmp_path))
+    assert "error" in make_calendar_event("x", "завтра", out_dir=str(tmp_path))
