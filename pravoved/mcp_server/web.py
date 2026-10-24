@@ -13,7 +13,8 @@ USER_AGENT = "Mozilla/5.0 (compatible; Pravoved/0.1; +local legal assistant)"
 TRUST_DOMAINS = {
     "official": ["pravo.gov.ru", "publication.pravo.gov.ru", "kremlin.ru", "government.ru", "vsrf.ru", "ksrf.ru"],
     "authority": ["rospotrebnadzor.ru", "rostrud.gov.ru", "xn--80akibcicpdbetz7e2g.xn--p1ai", "cbr.ru",
-                  "nalog.gov.ru", "sfr.gov.ru", "gosuslugi.ru"],
+                  "nalog.gov.ru", "sfr.gov.ru", "gosuslugi.ru", "minfin.gov.ru", "mintrud.gov.ru", "minjust.gov.ru",
+                  "minstroyrf.gov.ru", "fas.gov.ru", "genproc.gov.ru"],
     "draft": ["sozd.duma.gov.ru", "regulation.gov.ru", "duma.gov.ru"],
 }
 # у консультанта и гаранта официальны только тексты документов, остальное (подборки, новости, статьи) - разъяснения

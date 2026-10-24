@@ -89,6 +89,20 @@ def unverified_cited(answer, n_local, web):
     return count
 
 
+def strip_unverified(answer, n_local, web):
+    """Убирает из текста маркеры [n], которые указывают на неподтверждённые веб-источники."""
+    def fix(m):
+        keep = []
+        for n in re.findall(r"\d+", m.group(1)):
+            i = int(n) - n_local - 1
+            if not (0 <= i < len(web) and web[i]["trust"] == "unverified"):
+                keep.append(n)
+        return "[%s]" % ", ".join(keep) if keep else ""
+
+    text = MARKER.sub(fix, answer)
+    return re.sub(r"[ \t]+([.,;])", r"\1", text)
+
+
 NUM = r"\d{1,3}(?:[ \u00a0]\d{3})+(?:[.,]\d+)?|\d+(?:[.,]\d+)?"
 MONEY = re.compile(r"(%s)(?:\s*(?:до|-|–)\s*(%s))?(\s*тыс\.?)?\s*(?:₽|руб\w*|р\.)" % (NUM, NUM), re.IGNORECASE)
 PERCENT = re.compile(r"(%s)\s*(?:%%|процент)" % NUM)

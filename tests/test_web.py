@@ -48,3 +48,10 @@ def test_editorial_pages_are_authority():
     assert trust_of("https://www.garant.ru/news/1234567/") == "authority"
     assert trust_of("https://www.garant.ru/article/1500000/") == "authority"
     assert trust_of("https://www.consultant.ru/") == "authority"
+
+
+def test_government_sites_are_authority():
+    assert trust_of("https://minfin.gov.ru/ru/press-center/") == "authority"
+    assert trust_of("https://mintrud.gov.ru/docs") == "authority"
+    assert trust_of("https://rg.ru/2026/01/01/news.html") == "unverified"
+    assert trust_of("https://naloger.ru/x") == "unverified"

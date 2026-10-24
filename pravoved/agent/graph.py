@@ -11,7 +11,7 @@ from langgraph.graph import END, StateGraph
 
 from pravoved.agent import prompts
 from pravoved.agent.tools import WEB_TOOLS
-from pravoved.agent.verify import check_citations, only_unverified, unbacked_numbers, unverified_cited
+from pravoved.agent.verify import check_citations, only_unverified, strip_unverified, unbacked_numbers, unverified_cited
 from pravoved.corpus.meta import corpus_date
 from pravoved.mcp_server.web import TRUST_ORDER
 from pravoved.retrieval.search import search
@@ -22,7 +22,11 @@ MAX_TOOL_STEPS = 5
 SNIPPET = 1500
 WEB_SNIPPET = 3500
 MAX_WEB_PAGES = 3
+MAX_WEB_TRIES = 5
 SITES = " site:consultant.ru OR site:pravo.gov.ru OR site:garant.ru"
+# если среди результатов нет ни одного надёжного сайта, ищем ещё раз только по официальным
+SITES_ALL = (" site:consultant.ru OR site:garant.ru OR site:pravo.gov.ru OR site:rospotrebnadzor.ru"
+             " OR site:rostrud.gov.ru")
 # вопросы про расчёты отвечают инструменты, а не поиск; маленькие модели в grade часто путают их с вопросами вне базы
 CALC_WORDS = re.compile(r"ключев\w* ставк|неустойк|до какого числа|какого числа|когда (?:истека|законч)|компенсаци\w* за задержк", re.IGNORECASE)
 # деньги + сроки/даты + просьба посчитать: считать должен инструмент
@@ -137,9 +141,14 @@ def verify(state):
     tool_text = "\n".join(c["result"] for c in state["tool_calls"])
     hits = state["hits"]
     web_sources = state.get("web_sources", [])
+    answer = state["answer"]
+    # были надёжные источники, а модель сослалась на непроверенный: убираем эти ссылки
+    unverified = unverified_cited(answer, len(hits), web_sources)
+    if unverified and (hits or any(w["trust"] != "unverified" for w in web_sources)):
+        answer = strip_unverified(answer, len(hits), web_sources)
     # статьи из официальных веб-страниц (например КоАП) тоже считаются подтверждёнными
     tool_text += "\n" + "\n".join(w["text"] for w in web_sources if w["trust"] in ("official", "authority"))
-    text, cited, invalid, used = check_citations(state["answer"], hits, tool_text, len(web_sources))
+    text, cited, invalid, used = check_citations(answer, hits, tool_text, len(web_sources))
     sources = []
     for n in used:
         if n <= len(hits):
@@ -150,7 +159,6 @@ def verify(state):
             w = web_sources[n - len(hits) - 1]
             sources.append({"n": n, "citation": w["title"], "law": "web", "article": "", "trust": w["trust"],
                             "url": w["url"], "date": w.get("date"), "snippet": w["text"][:200].replace("\n", " ")})
-    unverified = unverified_cited(text, len(hits), web_sources)
     if not sources and not state["tool_calls"] and not state.get("regenerated"):
         return {"strict": True, "regenerated": True, "again": True}
     warnings = []
@@ -158,7 +166,7 @@ def verify(state):
         warnings.append("В ответе нет подтверждённых ссылок на источники, проверьте его самостоятельно.")
     if only_unverified(sources) or (not sources and only_unverified(web_sources)):
         text = prompts.UNVERIFIED_TOP + "\n\n" + text
-    elif unverified:
+    elif unverified_cited(text, len(hits), web_sources):
         warnings.append("В ответе есть ссылка на непроверенный сайт, это не официальный источник.")
     # сегодняшняя дата есть в системном промпте
     backing = [state["question"], tool_text, date.today().strftime("%d.%m.%Y")] + [hits[n - 1].text for n in used if n <= len(hits)]
@@ -238,6 +246,18 @@ def build_graph(llm, tools):
         queries = [str(q).strip() for q in data.get("queries", []) if str(q).strip()][:2]
         return queries or [question], [usage_of(msg, time.time() - t)]
 
+    async def read_pages(candidates, question):
+        pages = []
+        for r in candidates:
+            if len(pages) == MAX_WEB_PAGES:
+                break
+            page = await call_json("read_page", {"url": r["url"]})
+            if not page.get("text"):
+                continue
+            pages.append({"url": r["url"], "title": page.get("title") or r["title"], "trust": r["trust"],
+                          "date": page.get("date"), "text": relevant_part(page["text"], question, WEB_SNIPPET)})
+        return pages
+
     async def web(state):
         question = state["question"]
         queries, usage = await web_queries(question)
@@ -246,17 +266,16 @@ def build_graph(llm, tools):
         for q in queries + [queries[0] + SITES]:
             for r in (await call_json("web_search", {"query": q, "max_results": 6})).get("results", []):
                 found.setdefault(r["url"], r)
+        if all(r["trust"] == "unverified" for r in found.values()):
+            for r in (await call_json("web_search", {"query": queries[0] + SITES_ALL, "max_results": 6})).get("results", []):
+                found.setdefault(r["url"], r)
         ranked = sorted(found.values(), key=lambda r: TRUST_ORDER.index(r["trust"]))
-        # непроверенные сайты читаем, только если нормальных источников почти нет
         good = [r for r in ranked if r["trust"] != "unverified"]
-        chosen = good[:MAX_WEB_PAGES] if len(good) >= 2 else ranked[:MAX_WEB_PAGES]
-        pages = []
-        for r in chosen:
-            page = await call_json("read_page", {"url": r["url"]})
-            if not page.get("text"):
-                continue
-            pages.append({"url": r["url"], "title": page.get("title") or r["title"], "trust": r["trust"],
-                          "date": page.get("date"), "text": relevant_part(page["text"], question, WEB_SNIPPET)})
+        # сначала пробуем прочитать надёжные страницы (часть может не открыться)
+        pages = await read_pages(good[:MAX_WEB_TRIES], question)
+        if not pages:
+            # надёжных нет совсем: непроверенные идут в ответ с предупреждением
+            pages = await read_pages([r for r in ranked if r["trust"] == "unverified"][:MAX_WEB_PAGES], question)
         update = {"web_sources": pages, "usage": usage}
         if not state["enough"] and state.get("out_of_scope"):
             # локальные фрагменты не по теме, в ответ их не берём
@@ -277,7 +296,9 @@ def build_graph(llm, tools):
         base = corpus_date()
         base_date = prompts.BASE_DATE.format(date=base.strftime("%d.%m.%Y")) if base else ""
         system = prompts.ANSWER_SYSTEM.format(today=date.today().strftime("%d.%m.%Y"), base_date=base_date)
-        if web_sources:
+        if web_sources and all(w["trust"] == "unverified" for w in web_sources):
+            system += prompts.WEB_ADD + prompts.WEB_UNVERIFIED_ADD
+        elif web_sources:
             system += prompts.WEB_ADD
         if state.get("strict"):
             system += prompts.STRICT_ADD

@@ -235,3 +235,28 @@ def test_criminal_words():
     assert CRIMINAL_WORDS.search("Меня обвиняют в краже, какое наказание грозит по уголовному кодексу")
     assert CRIMINAL_WORDS.search("Какое наказание по УК за мошенничество")
     assert not CRIMINAL_WORDS.search("Какой штраф грозит продавцу за обвес")
+
+
+def test_strip_unverified_markers():
+    from pravoved.agent.verify import strip_unverified
+    web = [{"trust": "official"}, {"trust": "unverified"}]
+    assert strip_unverified("Штраф есть [1]. А по блогу больше [2].", 0, web) == "Штраф есть [1]. А по блогу больше."
+    assert strip_unverified("Оба источника [1, 2].", 0, web) == "Оба источника [1]."
+
+
+def test_unverified_marker_removed_when_official_exists():
+    web = [{"trust": "official", "text": "текст", "url": "https://consultant.ru/x", "title": "закон"},
+           {"trust": "unverified", "text": "текст", "url": "https://blog.example", "title": "блог"}]
+    res = state_for("Норма есть [1]. Блог пишет другое [2].", web)
+    assert "[2]" not in res["answer"] and "[1]" in res["answer"]
+    assert res["unverified_cited"] == 1
+    assert [s["n"] for s in res["sources"]] == [1]
+    assert "warning" not in res
+
+
+def test_only_unverified_cited_is_regenerated():
+    from pravoved.agent.graph import verify
+    web = [{"trust": "official", "text": "текст", "url": "https://consultant.ru/x", "title": "закон"},
+           {"trust": "unverified", "text": "текст", "url": "https://blog.example", "title": "блог"}]
+    res = verify({"answer": "Так пишут [2].", "hits": [], "web_sources": web, "tool_calls": [], "question": "в"})
+    assert res["again"] and res["strict"]
