@@ -5,6 +5,8 @@ from langchain_mcp_adapters.client import MultiServerMCPClient
 
 # сохранение дел агенту не отдаём: побочные эффекты без спроса не нужны
 HIDDEN = {"save_case", "list_cases"}
+# веб-инструменты вызывает только шаг web в графе: модель в ответе не должна сама тянуть непроверенные страницы
+WEB_TOOLS = {"web_search", "read_page"}
 
 
 async def load_tools():

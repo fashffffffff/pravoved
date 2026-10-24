@@ -10,8 +10,9 @@ def article_numbers(text):
     return set(ARTICLE.findall(text))
 
 
-def check_citations(answer, sources, tool_text=""):
-    """sources - список Hit в том порядке, как они пронумерованы в промпте.
+def check_citations(answer, sources, tool_text="", n_web=0):
+    """sources - список Hit в том порядке, как они пронумерованы в промпте, дальше идут n_web веб-источников
+    (их номера [len(sources)+1 ...] тоже считаются существующими).
     Возвращает (текст без неверных ссылок, cited, invalid, номера использованных источников)."""
     cited = 0
     invalid = 0
@@ -22,7 +23,7 @@ def check_citations(answer, sources, tool_text=""):
         good = []
         for n in re.findall(r"\d+", m.group(1)):
             cited += 1
-            if 1 <= int(n) <= len(sources):
+            if 1 <= int(n) <= len(sources) + n_web:
                 good.append(n)
                 if int(n) not in used:
                     used.append(int(n))
@@ -47,3 +48,15 @@ def check_citations(answer, sources, tool_text=""):
     text = ARTICLE.sub(fix_article, text)
     text = re.sub(r"[ \t]+([.,;])", r"\1", text)
     return text, cited, invalid, sorted(used)
+
+
+def unverified_cited(answer, n_local, web):
+    """Сколько раз в тексте есть ссылка [n] на неподтверждённый веб-источник.
+    web - список веб-источников (dict с ключом trust), нумерация продолжает локальные n_local."""
+    count = 0
+    for m in MARKER.finditer(answer):
+        for n in re.findall(r"\d+", m.group(1)):
+            i = int(n) - n_local - 1
+            if 0 <= i < len(web) and web[i]["trust"] == "unverified":
+                count += 1
+    return count

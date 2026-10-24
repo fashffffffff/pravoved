@@ -8,6 +8,7 @@ from pravoved.agent.run import ask, make_agent
 from pravoved.retrieval.store import close_client
 
 console = Console()
+BADGE_COLORS = {"official": "green", "authority": "green", "draft": "yellow", "unverified": "red"}
 
 
 def show_step(node, update):
@@ -18,6 +19,11 @@ def show_step(node, update):
                       % (update["enough"], update["out_of_scope"], update["retry"]))
         if update["retry"]:
             console.print("[dim]  новый запрос: %s[/dim]" % update["queries"][-1])
+    elif node == "web":
+        for w in update["web_sources"]:
+            console.print("[dim]web: [%s] %s[/dim]" % (w["trust"], w["url"]))
+        if not update["web_sources"]:
+            console.print("[dim]web: ничего не нашли[/dim]")
     elif node == "answer":
         for c in update["tool_calls"]:
             console.print("[dim]tool: %s %s -> %s[/dim]" % (c["name"], c["args"], c["result"][:100].replace("\n", " ")))
@@ -38,7 +44,11 @@ def show_result(res):
     if res["sources"]:
         console.print("\n[bold]Источники:[/bold]")
         for s in res["sources"]:
-            console.print("[%d] [cyan]%s[/cyan] - %s..." % (s["n"], s["citation"], s["snippet"][:120]), highlight=False)
+            if s["trust"] == "local":
+                console.print("[%d] [cyan]%s[/cyan] - %s..." % (s["n"], s["citation"], s["snippet"][:120]), highlight=False)
+            else:
+                color = BADGE_COLORS[s["trust"]]
+                console.print("[%d] [%s]\\[%s][/%s] %s %s, дата: %s" % (s["n"], color, s["trust"], color, s["citation"][:80], s["url"], s.get("date") or "не указана"), highlight=False)
     if res["tool_calls"]:
         console.print("\n[bold]Вызовы инструментов:[/bold]")
         for c in res["tool_calls"]:

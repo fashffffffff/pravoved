@@ -1,5 +1,5 @@
 from pravoved.agent.graph import hit_key, parse_json
-from pravoved.agent.verify import article_numbers, check_citations
+from pravoved.agent.verify import article_numbers, check_citations, unverified_cited
 from pravoved.retrieval.search import get_article
 
 
@@ -68,3 +68,32 @@ def test_calc_words():
     assert CALC_WORDS.search("Какая сейчас ключевая ставка Банка России?")
     assert CALC_WORDS.search("Когда истекает срок?")
     assert not CALC_WORDS.search("Как получить налоговый вычет за лечение зубов?")
+
+
+WEB = [{"trust": "official"}, {"trust": "unverified"}, {"trust": "draft"}]
+
+
+def test_web_marker_is_valid():
+    # два локальных источника, веб идёт с номера 3
+    text, cited, invalid, used = check_citations("Штраф есть [3]. Ещё [5].", sources(), n_web=3)
+    assert (cited, invalid, used) == (2, 0, [3, 5])
+
+
+def test_web_marker_without_web_is_invalid():
+    _, _, invalid, _ = check_citations("Штраф есть [3].", sources())
+    assert invalid == 1
+
+
+def test_unverified_cited_counts_only_unverified():
+    assert unverified_cited("Так [3]. И так [4]. И ещё [5].", 2, WEB) == 1
+    assert unverified_cited("Оба [3, 4].", 2, WEB) == 1
+    assert unverified_cited("Только [1] и [3].", 2, WEB) == 0
+    assert unverified_cited("Нет ссылок.", 2, WEB) == 0
+    assert unverified_cited("[4] [4]", 2, WEB) == 2
+
+
+def test_web_words():
+    from pravoved.agent.graph import WEB_WORDS
+    assert WEB_WORDS.search("Какой штраф для работодателя за задержку зарплаты?")
+    assert WEB_WORDS.search("Что изменилось в ТК с 1 сентября 2026?")
+    assert not WEB_WORDS.search("Телефон сломался через неделю, что делать?")
