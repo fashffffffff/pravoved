@@ -19,6 +19,9 @@ dependencies = [
     "python-dotenv",
     "rich",
     "pytest",
+    "httpx>=0.28.1",
+    "trafilatura>=2.3.1",
+    "ddgs>=9.16.1",
 ]
 
 [tool.setuptools]
