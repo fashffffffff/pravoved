@@ -28,18 +28,22 @@ def get_key_rate(date: str | None = None) -> dict:
 
 @mcp.tool()
 def calc_consumer_penalty(price: float, days: int | None = None, kind: str = "goods_defect",
-                          start_date: str | None = None, end_date: str | None = None) -> dict:
+                          start_date: str | None = None, end_date: str | None = None,
+                           paid: float | None = None) -> dict:
     """Неустойка по Закону о защите прав потребителей.
     price - цена товара/услуги в рублях (для prepaid_delivery - сумма предоплаты).
     days - число дней просрочки; вместо него можно передать start_date и end_date (ГГГГ-ММ-ДД),
     тогда считаются дни от start_date (не включая) до end_date (включительно).
+    paid - сколько потребитель реально заплатил за товар, если отличается от price (например, часть цены или
+    со скидкой): с 01.02.2026 неустойка по ст. 23 п. 1 не может быть больше уплаченной суммы (ФЗ № 500-ФЗ).
+    Без paid потолком считается price.
     kind: goods_defect - 1% в день (ст. 23 п. 1), prepaid_delivery - 0,5% в день, не более суммы предоплаты (ст. 23.1 п. 3),
     service_delay - 3% в день, не более цены услуги (ст. 28 п. 5)."""
     if days is None:
         if not (start_date and end_date):
             raise ValueError("нужно указать days или start_date и end_date")
         days = (date.fromisoformat(end_date) - date.fromisoformat(start_date)).days
-    return calc.penalty(price, days, kind)
+    return calc.penalty(price, days, kind, paid)
 
 
 @mcp.tool()
