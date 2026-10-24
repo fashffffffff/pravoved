@@ -21,7 +21,7 @@ def show_step(node, update):
             console.print("[dim]  новый запрос: %s[/dim]" % update["queries"][-1])
     elif node == "web":
         for w in update["web_sources"]:
-            console.print("[dim]web: [%s] %s[/dim]" % (w["trust"], w["url"]))
+            console.print("[dim]web: %s %s[/dim]" % (w["trust"], w["url"]))
         if not update["web_sources"]:
             console.print("[dim]web: ничего не нашли[/dim]")
     elif node == "answer":

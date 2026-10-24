@@ -25,7 +25,7 @@ SITES = " site:consultant.ru OR site:pravo.gov.ru OR site:garant.ru"
 # вопросы про расчёты отвечают инструменты, а не поиск; маленькие модели в grade часто путают их с вопросами вне базы
 CALC_WORDS = re.compile(r"ключев\w* ставк|неустойк|до какого числа|какого числа|когда (?:истека|законч)|компенсаци\w* за задержк", re.IGNORECASE)
 # вопросы про свежие изменения и штрафы: локальная база их не знает, идём в интернет
-WEB_WORDS = re.compile(r"нов\w+ закон|(?:с|в) (?:\d+ \w+ )?20[2-9]\d|измени[лт]\w*|изменени\w*|сейчас действу|штраф|коап", re.IGNORECASE)
+WEB_WORDS = re.compile(r"нов\w+ закон|(?:с|в) (?:\d+ \w+ )?20[2-9]\d|измени[лт]\w*|изменени\w*|\bсейчас\b|штраф|коап", re.IGNORECASE)
 
 
 class State(TypedDict, total=False):
@@ -190,8 +190,11 @@ def build_graph(llm, tools):
             for r in (await call_json("web_search", {"query": q, "max_results": 6})).get("results", []):
                 found.setdefault(r["url"], r)
         ranked = sorted(found.values(), key=lambda r: TRUST_ORDER.index(r["trust"]))
+        # непроверенные сайты читаем, только если нормальных источников почти нет
+        good = [r for r in ranked if r["trust"] != "unverified"]
+        chosen = good[:MAX_WEB_PAGES] if len(good) >= 2 else ranked[:MAX_WEB_PAGES]
         pages = []
-        for r in ranked[:MAX_WEB_PAGES]:
+        for r in chosen:
             page = await call_json("read_page", {"url": r["url"]})
             if not page.get("text"):
                 continue

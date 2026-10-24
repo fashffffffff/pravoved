@@ -18,6 +18,15 @@ LAW_NAMES = {
     "tk": "ТК РФ",
     "gk": "ГК РФ",
     "plenum17": "Пленум ВС №17",
+    "koap": "КоАП РФ",
+    "pp657": "Правила продажи (ПП №657)",
+    "pp924": "Перечень технически сложных товаров (ПП №924)",
+}
+
+# перечни целиком, без номера пункта
+LISTS = {
+    ("pp657", "remont"): "перечень товаров длительного пользования",
+    ("pp657", "obmen"): "перечень товаров, не подлежащих обмену",
 }
 
 
@@ -36,7 +45,11 @@ def get_client():
 
 def citation(law, article):
     name = LAW_NAMES.get(law, law)
-    if law == "plenum17":
+    if law == "pp924":
+        return name
+    if (law, article) in LISTS:
+        return "%s, %s" % (name, LISTS[(law, article)])
+    if law in ("plenum17", "pp657"):
         return "%s, п. %s" % (name, article)
     return "%s, ст. %s" % (name, article)
 

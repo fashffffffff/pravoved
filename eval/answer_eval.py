@@ -4,6 +4,7 @@ import argparse
 import asyncio
 import json
 import os
+import re
 import sys
 import time
 from datetime import date
@@ -17,6 +18,7 @@ from pravoved.retrieval.store import close_client  # noqa: E402
 
 QUESTIONS = ROOT / "eval" / "questions.jsonl"
 TOOL_CASES = ROOT / "eval" / "tool_cases.jsonl"
+WEB_CASES = ROOT / "eval" / "web_cases.jsonl"
 RESULTS = ROOT / "eval" / "results"
 
 
@@ -72,7 +74,8 @@ async def run_all(graph, items, kind):
         except Exception as e:
             print("  ошибка:", e)
             res = {"error": str(e), "answer": "", "refused": False, "sources": [], "tool_calls": [],
-                   "cited": 0, "invalid": 0, "seconds": 0, "tokens_per_sec": None}
+                   "cited": 0, "invalid": 0, "seconds": 0, "tokens_per_sec": None,
+                   "unverified_cited": 0, "web_used": False}
         res["case"] = item
         out.append(res)
     return out
@@ -109,19 +112,45 @@ def metrics(q_runs, t_runs):
     return m
 
 
+def web_metrics(runs):
+    ok = [r for r in runs if "error" not in r]
+    m = {"n_web_cases": len(runs), "errors": len(runs) - len(ok)}
+    if not ok:
+        return m
+    m["web_used_share"] = mean([r["web_used"] for r in ok])
+    m["refused_share"] = mean([r["refused"] for r in ok])
+    # основа ответа надёжная: есть ссылка на официальный/авторитетный/локальный источник и нет ссылок на unverified
+    trusted = [any(s["trust"] in ("local", "official", "authority") for s in r["sources"]) and not r["unverified_cited"]
+               for r in ok if not r["refused"]]
+    m["trusted_basis_share"] = mean(trusted)
+    m["unverified_cited"] = sum(r["unverified_cited"] for r in ok)
+    m["draft_cited"] = sum(1 for r in ok for s in r["sources"] if s["trust"] == "draft")
+    # у приманки в кейсе есть регулярка с ложным утверждением: смотрим, повторил ли его ответ
+    bait = [r for r in ok if r["case"].get("fake")]
+    m["fake_repeated"] = sum(1 for r in bait if re.search(r["case"]["fake"], r["answer"]))
+    m["avg_latency_s"] = mean([r["seconds"] for r in ok])
+    return m
+
+
 async def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--tag", help="сохранить результат в eval/results/TAG.json")
     parser.add_argument("--limit", type=int, help="сколько вопросов из questions.jsonl взять")
     parser.add_argument("--skip-questions", action="store_true")
     parser.add_argument("--skip-tools", action="store_true")
+    parser.add_argument("--web", action="store_true", help="только вопросы из web_cases.jsonl (нужен интернет)")
     args = parser.parse_args()
 
     graph = await make_agent()
     start = time.time()
-    q_runs = [] if args.skip_questions else await run_all(graph, pick(load(QUESTIONS), args.limit), "q")
-    t_runs = [] if args.skip_tools else await run_all(graph, load(TOOL_CASES), "tool")
-    m = metrics(q_runs, t_runs)
+    if args.web:
+        q_runs = await run_all(graph, load(WEB_CASES), "web")
+        t_runs = []
+        m = web_metrics(q_runs)
+    else:
+        q_runs = [] if args.skip_questions else await run_all(graph, pick(load(QUESTIONS), args.limit), "q")
+        t_runs = [] if args.skip_tools else await run_all(graph, load(TOOL_CASES), "tool")
+        m = metrics(q_runs, t_runs)
     for key, value in m.items():
         print("%-25s %s" % (key, value))
 

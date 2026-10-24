@@ -12,11 +12,13 @@ REFS = ROOT / "data" / "refs.jsonl"
 MAX_LEN = 1500   # длиннее - режем по частям
 MIN_PART = 500   # короткие части склеиваем
 
-ARTICLE_RE = re.compile(r"^Статья (\d+(?:\.\d+)?)\.\s*(.*)$")
+ARTICLE_RE = re.compile(r"^Статья (\d+(?:\.\d+)*)\.\s*(.*)$")
 PART_RE = re.compile(r"^(\d+)\.\s")
 POINT_RE = re.compile(r"^(\d+)\.\s")
 
 PLENUM_TITLE = "Постановление Пленума ВС РФ от 28.06.2012 N 17"
+
+LAW_FILES = ["zozpp", "tk", "gk", "koap", "plenum17", "pp657", "pp924"]
 
 
 def split_articles(text):
@@ -94,15 +96,16 @@ def article_units(law, text):
     return units
 
 
-def plenum_units(text):
+def point_units(law, text):
+    """Нумерованные пункты; заголовком пункта служит раздел, в котором он стоит"""
     units = []
     section = ""
-    point = None   # [номер, [строки]]
+    point = None   # [номер, [строки], раздел]
     started = False
 
     def flush():
         if point:
-            units.append(make_unit("plenum17", point[0], "", point[2], "\n".join(point[1])))
+            units.append(make_unit(law, point[0], "", point[2], "\n".join(point[1])))
 
     for line in text.splitlines():
         line = line.strip()
@@ -126,6 +129,59 @@ def plenum_units(text):
     return units
 
 
+def plenum_units(text):
+    return point_units("plenum17", text)
+
+
+def section_text(text, start, end=None):
+    """Кусок текста от раздела "## start..." до раздела "## end..." (не включая)"""
+    lines = text.splitlines()
+    first = next(i for i, l in enumerate(lines) if l.startswith("## " + start))
+    last = len(lines)
+    if end:
+        last = next(i for i, l in enumerate(lines) if i > first and l.startswith("## " + end))
+    return "\n".join(lines[first:last])
+
+
+def list_units(law, article, title, text):
+    """Перечень без смысла резать по пунктам: один-два куска текста"""
+    pieces = pack_lines([l.strip() for l in text.splitlines() if l.strip()])
+    parts = [str(i) for i in range(1, len(pieces) + 1)] if len(pieces) > 1 else [""]
+    return [make_unit(law, article, part, title, piece) for part, piece in zip(parts, pieces)]
+
+
+def list_body(text):
+    # у перечня в начале шапка "Утвержден постановлением ..." и заголовок капсом, до первого пункта
+    lines = text.splitlines()
+    first = next(i for i, l in enumerate(lines) if l.startswith("1. "))
+    return "\n".join(lines[first:])
+
+
+def rules_units(text):
+    rules = section_text(text, "Правила продажи товаров по договору", "Перечень товаров длительного")
+    units = point_units("pp657", rules)
+    remont = section_text(text, "Перечень товаров длительного", "Перечень непродовольственных")
+    obmen = section_text(text, "Перечень непродовольственных")
+    units += list_units("pp657", "remont", "Перечень товаров длительного пользования, на которые не распространяется требование о предоставлении товара на период ремонта или замены", list_body(remont))
+    units += list_units("pp657", "obmen", "Перечень непродовольственных товаров надлежащего качества, не подлежащих обмену", list_body(obmen))
+    return units
+
+
+def complex_goods_units(text):
+    body = list_body(section_text(text, "Перечень технически сложных товаров"))
+    return list_units("pp924", "perechen", "Перечень технически сложных товаров", body)
+
+
+def file_units(code, text):
+    if code == "plenum17":
+        return plenum_units(text)
+    if code == "pp657":
+        return rules_units(text)
+    if code == "pp924":
+        return complex_goods_units(text)
+    return article_units(code, text)
+
+
 def make_unit(law, article, part, title, text):
     uid = law + ":" + article + (":" + part if part else "")
     return {"id": uid, "law": law, "article": article, "part": part, "title": title, "text": text}
@@ -135,22 +191,24 @@ def make_unit(law, article, part, title, text):
 
 ART_REF = re.compile(
     r"(?:стать(?:я|и|е|ю|ей|ями|ях)|ст\.)\s*"
-    r"((?:\d+(?:\.\d+)?)(?:\s*(?:,|и|-|–)\s*\d+(?:\.\d+)?)*)"
+    r"((?:\d+(?:\.\d+)*)(?:\s*(?:,|и|-|–)\s*\d+(?:\.\d+)*)*)"
 )
-NUM_RE = re.compile(r"\d+(?:\.\d+)?")
+NUM_RE = re.compile(r"\d+(?:\.\d+)*")
 
 
 def target_law(own_law, tail):
     tail = tail[:60]
-    if re.match(r"\s*(ГПК|АПК|УК|НК|КоАП|СК|ЖК|УПК|ЗК)\b", tail):
+    if re.match(r"\s*(ГПК|АПК|УК|НК|СК|ЖК|УПК|ЗК)\b", tail):
         return None
+    if re.match(r"\s*КоАП", tail):
+        return "koap"
     if re.match(r"\s*(ГК\b|Гражданск)", tail):
         return "gk"
     if re.match(r"\s*(ТК\b|Трудов)", tail):
         return "tk"
     if re.match(r"\s*(настоящего|данного)\s+(Закона|Кодекса)", tail):
         return own_law
-    if re.match(r"\s*Закона о защите прав потребителей", tail):
+    if re.match(r"\s*Закона (Российской Федерации )?(о|\"О|«О) защите прав потребителей", tail):
         return "zozpp"
     if own_law == "plenum17":
         # в постановлении "статья N Закона" - это ЗоЗПП
@@ -187,9 +245,8 @@ def build_refs(units):
 
 def main():
     units = []
-    for law in ["zozpp", "tk", "gk"]:
-        units += article_units(law, (RAW / (law + ".txt")).read_text(encoding="utf-8"))
-    units += plenum_units((RAW / "plenum17.txt").read_text(encoding="utf-8"))
+    for code in LAW_FILES:
+        units += file_units(code, (RAW / (code + ".txt")).read_text(encoding="utf-8"))
 
     with open(CHUNKS, "w", encoding="utf-8") as f:
         for u in units:
