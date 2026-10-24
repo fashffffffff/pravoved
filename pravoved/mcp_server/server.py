@@ -1,11 +1,18 @@
 import argparse
+import logging
+import os
 from datetime import date
 
 from mcp.server.fastmcp import FastMCP
 
 from pravoved.mcp_server import calc, cases, key_rate, web
 
-mcp = FastMCP("pravoved-tools")
+# подробные логи (запросы mcp, httpx, ddgs) только под --debug, CLI передаёт PRAVOVED_DEBUG
+DEBUG = os.environ.get("PRAVOVED_DEBUG") == "1"
+mcp = FastMCP("pravoved-tools", log_level="INFO" if DEBUG else "WARNING")
+if not DEBUG:
+    for name in ("httpx", "httpcore", "ddgs", "primp", "trafilatura", "mcp"):
+        logging.getLogger(name).setLevel(logging.WARNING)
 
 
 def parse_date(s: str | None) -> date:

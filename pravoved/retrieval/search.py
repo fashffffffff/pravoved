@@ -1,13 +1,16 @@
+import os
 from dataclasses import dataclass
 from functools import lru_cache
 
 from .bm25 import BM25Index
-from .embed import embed
+from .embed import embed, pick_device, unit_text
 from .store import COLLECTION, citation, get_client, load_units
 
 RRF_K = 60
 # bm25 на бытовых формулировках заметно слабее векторов, поэтому вес меньше
 WEIGHTS = (1.0, 0.3)
+RERANK_MODEL = "BAAI/bge-reranker-v2-m3"
+RERANK_POOL = 20
 
 
 @dataclass
@@ -62,12 +65,33 @@ def rrf(rankings, k, weights=WEIGHTS):
     return sorted(total.items(), key=lambda x: x[1], reverse=True)[:k]
 
 
+def rerank_enabled():
+    return os.environ.get("RERANK", "true").strip().lower() not in ("0", "false", "no", "off")
+
+
+@lru_cache(maxsize=1)
+def reranker():
+    from sentence_transformers import CrossEncoder
+    return CrossEncoder(RERANK_MODEL, device=pick_device(), max_length=512)
+
+
+def rerank(query, ids):
+    """Переупорядочивает кандидатов кросс-энкодером. -> список (id, score) по убыванию"""
+    by_id = units_by_id()
+    pairs = [(query, unit_text(by_id[uid])) for uid in ids]
+    scores = reranker().predict(pairs, batch_size=8, show_progress_bar=False)
+    return sorted(zip(ids, (float(x) for x in scores)), key=lambda x: x[1], reverse=True)
+
+
 def search(query, k=8):
     pool = max(k * 4, 30)
-    fused = rrf([vector_search(query, pool), bm25_search(query, pool)], k)
     by_id = units_by_id()
-    # TODO: реранкер (bge-reranker) поверх fused, когда будет время
-    return [make_hit(by_id[uid], score) for uid, score in fused]
+    if rerank_enabled():
+        fused = rrf([vector_search(query, pool), bm25_search(query, pool)], max(RERANK_POOL, k))
+        ranked = rerank(query, [uid for uid, _ in fused])[:k]
+    else:
+        ranked = rrf([vector_search(query, pool), bm25_search(query, pool)], k)
+    return [make_hit(by_id[uid], score) for uid, score in ranked]
 
 
 def get_article(law, article):

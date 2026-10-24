@@ -1,10 +1,12 @@
 import argparse
 import asyncio
+import os
 
 from rich.console import Console
 from rich.markdown import Markdown
 
 from pravoved.agent.run import ask, make_agent
+from pravoved.corpus.meta import corpus_date
 from pravoved.retrieval.store import close_client
 
 console = Console()
@@ -54,9 +56,14 @@ def show_result(res):
         for c in res["tool_calls"]:
             console.print("%s %s" % (c["name"], c["args"]), highlight=False)
     console.print("[dim]%.1f с, %s ток/с[/dim]" % (res["seconds"], res["tokens_per_sec"]))
+    base = corpus_date()
+    if base:
+        console.print("[dim]База: законы по состоянию на %s[/dim]" % base.strftime("%d.%m.%Y"))
 
 
 async def run(args):
+    if args.debug:
+        os.environ["PRAVOVED_DEBUG"] = "1"
     graph = await make_agent()
     on_step = show_step if args.debug else None
     if args.cmd == "ask":

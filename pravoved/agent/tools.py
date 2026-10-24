@@ -14,7 +14,8 @@ async def load_tools():
     if url:
         conf = {"transport": "streamable_http", "url": url}
     else:
-        conf = {"transport": "stdio", "command": sys.executable, "args": ["-m", "pravoved.mcp_server"]}
+        conf = {"transport": "stdio", "command": sys.executable, "args": ["-m", "pravoved.mcp_server"],
+                "env": {"PRAVOVED_DEBUG": os.environ.get("PRAVOVED_DEBUG", "0")}}
     client = MultiServerMCPClient({"pravoved": conf})
     tools = await client.get_tools()
     return [t for t in tools if t.name not in HIDDEN]

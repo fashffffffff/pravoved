@@ -12,6 +12,7 @@ from langgraph.graph import END, StateGraph
 from pravoved.agent import prompts
 from pravoved.agent.tools import WEB_TOOLS
 from pravoved.agent.verify import check_citations, unverified_cited
+from pravoved.corpus.meta import corpus_date
 from pravoved.mcp_server.web import TRUST_ORDER
 from pravoved.retrieval.search import search
 
@@ -217,7 +218,9 @@ def build_graph(llm, tools):
     async def answer(state):
         hits = state["hits"]
         web_sources = state.get("web_sources", [])
-        system = prompts.ANSWER_SYSTEM.format(today=date.today().strftime("%d.%m.%Y"))
+        base = corpus_date()
+        base_date = prompts.BASE_DATE.format(date=base.strftime("%d.%m.%Y")) if base else ""
+        system = prompts.ANSWER_SYSTEM.format(today=date.today().strftime("%d.%m.%Y"), base_date=base_date)
         if web_sources:
             system += prompts.WEB_ADD
         if state.get("strict"):

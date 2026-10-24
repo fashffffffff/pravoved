@@ -1,17 +1,19 @@
-"""Оценка поиска: recall@5, recall@8 и MRR для vector, bm25 и hybrid.
+"""Оценка поиска: recall@5, recall@8 и MRR для vector, bm25, hybrid и hybrid+rerank.
 Попадание считаем по статье (law:article), части одной статьи не различаем."""
 import json
 import sys
+import time
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
-from pravoved.retrieval.search import bm25_search, rrf, vector_search  # noqa: E402
+from pravoved.retrieval.search import RERANK_POOL, bm25_search, rerank, rrf, vector_search  # noqa: E402
 from pravoved.retrieval.store import close_client  # noqa: E402
 
 QUESTIONS = ROOT / "eval" / "questions.jsonl"
 POOL = 30
+rerank_times = []
 
 
 def load_questions():
@@ -37,10 +39,14 @@ def rank_all(query):
     vec = vector_search(query, POOL)
     bm = bm25_search(query, POOL)
     hybrid = rrf([vec, bm], POOL)
+    t = time.time()
+    top = rerank(query, [uid for uid, _ in hybrid[:RERANK_POOL]])
+    rerank_times.append(time.time() - t)
     return {
         "vector": unique_articles(vec),
         "bm25": unique_articles(bm),
         "hybrid": unique_articles(hybrid),
+        "hybrid+rerank": unique_articles(top + hybrid[RERANK_POOL:]),
     }
 
 
@@ -58,7 +64,7 @@ def mrr(found, expected):
 
 def main():
     questions = [q for q in load_questions() if q["expected"]]
-    names = ["vector", "bm25", "hybrid"]
+    names = ["vector", "bm25", "hybrid", "hybrid+rerank"]
     stats = {n: {"r5": [], "r8": [], "mrr": []} for n in names}
     misses = []
 
@@ -73,10 +79,12 @@ def main():
 
     close_client()
     print("вопросов с ответом: %d" % len(questions))
-    print("%-8s %9s %9s %7s" % ("", "recall@5", "recall@8", "MRR"))
+    print("%-14s %9s %9s %7s" % ("", "recall@5", "recall@8", "MRR"))
     for n in names:
         avg = {k: sum(v) / len(v) for k, v in stats[n].items()}
-        print("%-8s %9.3f %9.3f %7.3f" % (n, avg["r5"], avg["r8"], avg["mrr"]))
+        print("%-14s %9.3f %9.3f %7.3f" % (n, avg["r5"], avg["r8"], avg["mrr"]))
+
+    print("rerank на запрос (%d кандидатов): %.2f с в среднем" % (RERANK_POOL, sum(rerank_times[1:]) / max(len(rerank_times) - 1, 1)))
 
     if "-v" in sys.argv:
         print("\nгде hybrid не нашёл всё в топ-8:")
