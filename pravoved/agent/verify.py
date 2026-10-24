@@ -140,14 +140,50 @@ def find_amounts(text):
     return found
 
 
+# в кодексах суммы пишут словами: "от трех тысяч до пяти тысяч рублей"
+SMALL = {"одного": 1, "одной": 1, "один": 1, "одна": 1, "двух": 2, "два": 2, "две": 2, "трех": 3, "трёх": 3, "три": 3,
+         "четырех": 4, "четырёх": 4, "четыре": 4, "пяти": 5, "пять": 5, "шести": 6, "шесть": 6, "семи": 7, "семь": 7,
+         "восьми": 8, "восемь": 8, "девяти": 9, "девять": 9, "десяти": 10, "десять": 10, "одиннадцати": 11,
+         "двенадцати": 12, "тринадцати": 13, "четырнадцати": 14, "пятнадцати": 15, "шестнадцати": 16,
+         "семнадцати": 17, "восемнадцати": 18, "девятнадцати": 19, "двадцати": 20, "двадцать": 20, "тридцати": 30,
+         "тридцать": 30, "сорока": 40, "сорок": 40, "пятидесяти": 50, "пятьдесят": 50, "шестидесяти": 60,
+         "шестьдесят": 60, "семидесяти": 70, "семьдесят": 70, "восьмидесяти": 80, "восемьдесят": 80,
+         "девяноста": 90, "девяносто": 90, "ста": 100, "сто": 100, "двухсот": 200, "двести": 200, "трехсот": 300,
+         "трёхсот": 300, "триста": 300, "четырехсот": 400, "четырёхсот": 400, "четыреста": 400, "пятисот": 500,
+         "пятьсот": 500, "шестисот": 600, "шестьсот": 600, "семисот": 700, "семьсот": 700, "восьмисот": 800,
+         "восемьсот": 800, "девятисот": 900, "девятьсот": 900}
+
+
+def word_numbers(text):
+    """Числа, записанные словами: "двадцати тысяч" -> {"20000"}"""
+    found = set()
+    total = current = 0
+    for word in re.findall(r"[а-яё]+|\W", text.lower()) + ["."]:
+        if word in SMALL:
+            current += SMALL[word]
+        elif word.startswith("тысяч"):
+            total += max(current, 1) * 1000
+            current = 0
+        elif word.startswith("миллион"):
+            total += max(current, 1) * 1000000
+            current = 0
+        elif not word.isspace() or not (total or current):
+            # пробел внутри числа не обрывает его, всё остальное обрывает
+            if total or current:
+                found.add(str(total + current))
+            total = current = 0
+    return found
+
+
 def unbacked_numbers(answer, backing):
     """Суммы, проценты и даты из ответа, которых нет в backing (вопрос, ответы инструментов, цитируемые источники)."""
     have = {norm_num(n) for n in re.findall(NUM, backing)}
     have |= {norm_num(n) for n in re.findall(r"\d+(?:[.,]\d+)?", backing)}
+    have |= word_numbers(backing)
     bad = [text for value, text in find_amounts(answer).items() if value not in have]
     have_days = set(find_dates(backing))
     bad += [text for key, text in find_dates(answer).items() if key not in have_days]
-    return bad
+    return list(dict.fromkeys(bad))
 
 
 def only_unverified(sources):

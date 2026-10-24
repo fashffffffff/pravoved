@@ -29,6 +29,8 @@ CALC_WORDS = re.compile(r"ключев\w* ставк|неустойк|до ка�
 QUESTION_MONEY = re.compile(r"\d\s*(?:₽|руб|р\.|тыс)", re.IGNORECASE)
 QUESTION_TIME = re.compile(r"\d+\s*(?:дн|календарн|рабоч|недел|месяц)|\d{1,2}\s+(?:январ|феврал|март|апрел|ма[яй]|июн|июл|август|сентябр|октябр|ноябр|декабр)|\d{1,2}\.\d{2}\.\d{4}", re.IGNORECASE)
 QUESTION_ASK = re.compile(r"сколько|посчита|рассчита|подсчита|размер", re.IGNORECASE)
+# уголовное право вне базы, веб для него не нужен: отказываем сразу
+CRIMINAL_WORDS = re.compile(r"уголовн|\bУК\b|кражу|краже|убийств|преступлен|мошенничеств", re.IGNORECASE)
 # вопросы про свежие изменения и штрафы: локальная база их не знает, идём в интернет
 WEB_WORDS = re.compile(r"нов\w+ закон|(?:с|в) (?:\d+ \w+ )?20[2-9]\d|измени[лт]\w*|изменени\w*|\bсейчас\b|штраф|коап|принят\w* ли|законопроект", re.IGNORECASE)
 
@@ -158,7 +160,8 @@ def verify(state):
         text = prompts.UNVERIFIED_TOP + "\n\n" + text
     elif unverified:
         warnings.append("В ответе есть ссылка на непроверенный сайт, это не официальный источник.")
-    backing = [state["question"], tool_text] + [hits[n - 1].text for n in used if n <= len(hits)]
+    # сегодняшняя дата есть в системном промпте
+    backing = [state["question"], tool_text, date.today().strftime("%d.%m.%Y")] + [hits[n - 1].text for n in used if n <= len(hits)]
     backing += [web_sources[n - len(hits) - 1]["text"] for n in used if n > len(hits)]
     unbacked = unbacked_numbers(text, "\n".join(backing))
     if unbacked:
@@ -203,6 +206,8 @@ def build_graph(llm, tools):
         calc = bool(CALC_WORDS.search(state["question"]))
         if calc:
             out, enough, legal = False, True, True
+        elif CRIMINAL_WORDS.search(state["question"]):
+            out, enough, legal = True, False, False
         need_web = legal and not calc and bool(WEB_WORDS.search(state["question"]))
         update = {"enough": enough, "retry": False, "out_of_scope": out, "legal": legal, "need_web": need_web,
                   "where": str(data.get("where") or ""), "usage": usage}

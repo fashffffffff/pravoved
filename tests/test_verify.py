@@ -214,3 +214,24 @@ def test_needs_calc():
     assert needs_calc("Телефон за 40 000 рублей, магазин молчал 12 дней. Сколько мне положено?")
     assert not needs_calc("Телефон за 40 000 рублей сломался, можно ли вернуть?")
     assert not needs_calc("Как оформить возврат?")
+
+
+def test_word_numbers():
+    from pravoved.agent.verify import word_numbers
+    assert word_numbers("от трех тысяч до пяти тысяч рублей") == {"3000", "5000"}
+    assert word_numbers("в размере двадцати пяти тысяч рублей") == {"25000"}
+    assert word_numbers("сто пятьдесят тысяч двести рублей") == {"150200"}
+    assert word_numbers("обычный текст") == set()
+
+
+def test_amount_backed_by_words_in_law():
+    law = "штраф на граждан от трех тысяч до пяти тысяч рублей; на юридических лиц от двадцати тысяч до пятидесяти тысяч рублей"
+    assert unbacked_numbers("Штраф от 3 000 до 5 000 рублей, юрлицам от 20 000 до 50 000 рублей.", law) == []
+    assert unbacked_numbers("Штраф от 3 000 до 7 000 рублей.", law) == ["3 000 до 7 000 рублей"]
+
+
+def test_criminal_words():
+    from pravoved.agent.graph import CRIMINAL_WORDS
+    assert CRIMINAL_WORDS.search("Меня обвиняют в краже, какое наказание грозит по уголовному кодексу")
+    assert CRIMINAL_WORDS.search("Какое наказание по УК за мошенничество")
+    assert not CRIMINAL_WORDS.search("Какой штраф грозит продавцу за обвес")
