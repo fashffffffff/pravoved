@@ -1,8 +1,15 @@
+import os
+import tempfile
 import time
+from pathlib import Path
 
+from pravoved.agent import contract
 from pravoved.agent.graph import build_graph
 from pravoved.agent.llm import make_llm
-from pravoved.agent.tools import load_tools
+from pravoved.agent.tools import call_tool, load_tools
+
+# llm и инструменты последнего созданного агента, нужны проверке договора и претензиям
+kit = {}
 
 
 def total_usage(usage):
@@ -14,7 +21,9 @@ def total_usage(usage):
 
 
 async def make_agent():
-    return build_graph(make_llm(), await load_tools())
+    kit["llm"] = make_llm()
+    kit["tools"] = await load_tools()
+    return build_graph(kit["llm"], kit["tools"])
 
 
 async def ask(graph, question, on_step=None):
@@ -44,3 +53,39 @@ async def ask(graph, question, on_step=None):
         "seconds": round(time.time() - start, 2),
         **total_usage(final.get("usage", [])),
     }
+
+
+def save_temp(filename, data):
+    fd, path = tempfile.mkstemp(suffix=Path(filename).suffix.lower())
+    with os.fdopen(fd, "wb") as f:
+        f.write(data)
+    return path
+
+
+async def read_scan(filename, data):
+    """Текст из скана, фото или pdf (байты файла). -> строка"""
+    path = save_temp(filename, data)
+    try:
+        res = await call_tool(kit["tools"], "read_scan", {"path": path})
+    finally:
+        os.unlink(path)
+    if "error" in res:
+        raise ValueError(res["error"])
+    return res["text"]
+
+
+async def check_contract(graph, filename, data, on_progress=None):
+    """Проверка договора по пунктам. data - байты файла (txt, docx, pdf, jpg, png).
+    Возвращает dict: kind, clauses (id, text, section, color, reason, cites), counts, top_risks, markdown, seconds."""
+    path = save_temp(filename, data)
+    try:
+        text = await contract.read_file(path, kit["tools"])
+    finally:
+        os.unlink(path)
+    return await check_contract_text(text, filename, on_progress)
+
+
+async def check_contract_text(text, filename="", on_progress=None):
+    res = await contract.check_contract(kit["llm"], text, on_progress)
+    res["filename"] = filename
+    return res

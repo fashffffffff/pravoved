@@ -1,0 +1,17 @@
+# id цвет статья (law:article, через | если подходят несколько; - если статьи нет)
+1.1 green
+1.2 green
+1.3 red tk:70
+1.4 green
+2.1 green
+2.2 red tk:136
+2.3 red tk:72
+2.4 green
+3.1 green
+3.2 yellow
+3.3 red tk:115
+3.4 red tk:183
+4.1 green
+4.2 red tk:80|tk:232|tk:238
+4.3 green
+4.4 green

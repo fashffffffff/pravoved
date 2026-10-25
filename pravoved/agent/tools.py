@@ -1,3 +1,4 @@
+import json
 import os
 import sys
 
@@ -21,3 +22,15 @@ async def load_tools():
     client = MultiServerMCPClient({"pravoved": conf})
     tools = await client.get_tools()
     return [t for t in tools if t.name not in HIDDEN]
+
+
+async def call_tool(tools, name, args):
+    """Вызывает инструмент MCP и возвращает ответ как dict"""
+    tool = next(t for t in tools if t.name == name)
+    result = await tool.ainvoke(args)
+    if isinstance(result, list):
+        result = "\n".join(b.get("text", "") if isinstance(b, dict) else str(b) for b in result)
+    try:
+        return json.loads(result)
+    except (TypeError, json.JSONDecodeError):
+        return {"error": str(result)}
