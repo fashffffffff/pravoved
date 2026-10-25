@@ -43,6 +43,7 @@ WEB_WORDS = re.compile(r"нов\w+ закон|(?:с|в) (?:\d+ \w+ )?20[2-9]\d|�
 
 class State(TypedDict, total=False):
     question: str
+    history: str
     queries: list
     hits: list
     retries: int
@@ -324,6 +325,8 @@ def build_graph(llm, tools):
         if state.get("strict"):
             system += prompts.STRICT_ADD
         user = prompts.ANSWER_USER.format(sources=source_list(hits, web_sources), question=state["question"])
+        if state.get("history"):
+            user += prompts.HISTORY_ADD.format(history=state["history"])
         if state.get("faith_feedback"):
             user += "\n\n" + state["faith_feedback"]
         msgs = [SystemMessage(system), HumanMessage(user)]
