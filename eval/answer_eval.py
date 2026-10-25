@@ -157,6 +157,7 @@ async def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--tag", help="сохранить результат в eval/results/TAG.json")
     parser.add_argument("--limit", type=int, help="сколько вопросов из questions.jsonl взять")
+    parser.add_argument("--questions", type=Path, default=QUESTIONS, help="файл с вопросами (по умолчанию eval/questions.jsonl)")
     parser.add_argument("--skip-questions", action="store_true")
     parser.add_argument("--skip-tools", action="store_true")
     parser.add_argument("--web", action="store_true", help="только вопросы из web_cases.jsonl (нужен интернет)")
@@ -169,7 +170,7 @@ async def main():
         t_runs = []
         m = web_metrics(q_runs)
     else:
-        q_runs = [] if args.skip_questions else await run_all(graph, pick(load(QUESTIONS), args.limit), "q")
+        q_runs = [] if args.skip_questions else await run_all(graph, pick(load(args.questions), args.limit), "q")
         t_runs = [] if args.skip_tools else await run_all(graph, load(TOOL_CASES), "tool")
         m = metrics(q_runs, t_runs)
     for key, value in m.items():
