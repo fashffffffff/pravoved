@@ -26,10 +26,11 @@ dependencies = [
     "pytesseract>=0.3.13",
     "pypdfium2>=5.14.0",
     "pillow>=13.0.0",
+    "streamlit>=1.66.1",
 ]
 
 [tool.setuptools]
-packages = ["pravoved", "pravoved.corpus", "pravoved.retrieval", "pravoved.mcp_server", "pravoved.agent"]
+packages = ["pravoved", "pravoved.corpus", "pravoved.retrieval", "pravoved.mcp_server", "pravoved.agent", "pravoved.ui"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
