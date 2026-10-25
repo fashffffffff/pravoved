@@ -21,7 +21,7 @@
     uv run python -m pravoved.retrieval build     # индекс (первый раз скачает bge-m3, ~2 ГБ)
     uv run python -m pravoved.retrieval search "магазин не принимает сломанный телефон"
 
-    uv run python eval/retrieval_eval.py          # recall@k и MRR: vector, bm25, hybrid, hybrid+rerank
+    uv run python eval/retrieval_eval.py          # recall@k и MRR: vector, bm25, hybrid, hybrid+rerank, +graph
     uv run pytest
 
 Индекс Qdrant лежит в `data/index/qdrant` (встроенный режим). Для сервера задайте `QDRANT_URL`.

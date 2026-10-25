@@ -1,351 +1,388 @@
-{"from": "gk:464", "to": "gk:456"}
-{"from": "gk:466", "to": "gk:483"}
-{"from": "gk:470", "to": "gk:469"}
-{"from": "gk:471", "to": "gk:457"}
-{"from": "gk:471", "to": "gk:476"}
-{"from": "gk:471", "to": "gk:483"}
-{"from": "gk:475", "to": "gk:479"}
-{"from": "gk:480", "to": "gk:478"}
-{"from": "gk:480", "to": "gk:479"}
-{"from": "gk:482", "to": "gk:475"}
-{"from": "gk:487", "to": "gk:457"}
-{"from": "gk:489", "to": "gk:488"}
-{"from": "gk:500", "to": "gk:487"}
-{"from": "gk:500", "to": "gk:488"}
-{"from": "gk:501", "to": "gk:491"}
-{"from": "gk:503", "to": "gk:475"}
-{"from": "gk:609", "to": "gk:624"}
-{"from": "gk:621", "to": "gk:610"}
-{"from": "gk:627", "to": "gk:621"}
-{"from": "gk:632", "to": "gk:621"}
-{"from": "gk:633", "to": "gk:609"}
-{"from": "gk:642", "to": "gk:621"}
-{"from": "gk:643", "to": "gk:609"}
-{"from": "gk:664", "to": "gk:656"}
-{"from": "gk:664", "to": "gk:657"}
-{"from": "gk:664", "to": "gk:659"}
-{"from": "gk:672", "to": "gk:678"}
-{"from": "gk:672", "to": "gk:681"}
-{"from": "gk:672", "to": "gk:685"}
-{"from": "gk:672", "to": "gk:686"}
-{"from": "gk:677", "to": "gk:679"}
-{"from": "gk:683", "to": "gk:677"}
-{"from": "gk:683", "to": "gk:680"}
-{"from": "gk:683", "to": "gk:684"}
-{"from": "gk:683", "to": "gk:686"}
-{"from": "gk:683", "to": "gk:687"}
-{"from": "koap:5.27", "to": "koap:5.27.1"}
-{"from": "plenum17:13", "to": "zozpp:18"}
-{"from": "plenum17:13", "to": "zozpp:20"}
-{"from": "plenum17:13", "to": "zozpp:29"}
-{"from": "plenum17:14", "to": "zozpp:18"}
-{"from": "plenum17:15", "to": "zozpp:17"}
-{"from": "plenum17:19", "to": "zozpp:40"}
-{"from": "plenum17:2", "to": "zozpp:39"}
-{"from": "plenum17:20", "to": "zozpp:44"}
-{"from": "plenum17:20", "to": "zozpp:45"}
-{"from": "plenum17:20", "to": "zozpp:46"}
-{"from": "plenum17:22", "to": "zozpp:17"}
-{"from": "plenum17:25", "to": "zozpp:17"}
-{"from": "plenum17:26", "to": "zozpp:17"}
-{"from": "plenum17:28", "to": "zozpp:28"}
-{"from": "plenum17:28", "to": "zozpp:29"}
-{"from": "plenum17:3", "to": "zozpp:12"}
-{"from": "plenum17:31", "to": "zozpp:13"}
-{"from": "plenum17:32", "to": "zozpp:18"}
-{"from": "plenum17:32", "to": "zozpp:20"}
-{"from": "plenum17:32", "to": "zozpp:21"}
-{"from": "plenum17:32", "to": "zozpp:22"}
-{"from": "plenum17:32", "to": "zozpp:23"}
-{"from": "plenum17:32", "to": "zozpp:23.1"}
-{"from": "plenum17:32", "to": "zozpp:28"}
-{"from": "plenum17:32", "to": "zozpp:30"}
-{"from": "plenum17:32", "to": "zozpp:31"}
-{"from": "plenum17:34", "to": "zozpp:30"}
-{"from": "plenum17:34", "to": "zozpp:31"}
-{"from": "plenum17:35", "to": "zozpp:14"}
-{"from": "plenum17:35", "to": "zozpp:18"}
-{"from": "plenum17:36", "to": "zozpp:12"}
-{"from": "plenum17:37", "to": "zozpp:35"}
-{"from": "plenum17:38", "to": "gk:475"}
-{"from": "plenum17:38", "to": "gk:503"}
-{"from": "plenum17:38", "to": "zozpp:18"}
-{"from": "plenum17:38", "to": "zozpp:20"}
-{"from": "plenum17:38", "to": "zozpp:21"}
-{"from": "plenum17:38", "to": "zozpp:22"}
-{"from": "plenum17:38", "to": "zozpp:4"}
-{"from": "plenum17:39", "to": "gk:469"}
-{"from": "plenum17:40", "to": "gk:503"}
-{"from": "plenum17:40", "to": "zozpp:18"}
-{"from": "plenum17:43", "to": "gk:493"}
-{"from": "plenum17:43", "to": "zozpp:18"}
-{"from": "plenum17:44", "to": "zozpp:10"}
-{"from": "plenum17:44", "to": "zozpp:12"}
-{"from": "plenum17:44", "to": "zozpp:8"}
-{"from": "plenum17:46", "to": "zozpp:13"}
-{"from": "plenum17:47", "to": "zozpp:13"}
-{"from": "plenum17:48", "to": "zozpp:37"}
-{"from": "plenum17:50", "to": "gk:638"}
-{"from": "plenum17:53", "to": "zozpp:46"}
-{"from": "pp657:21", "to": "zozpp:26.1"}
-{"from": "pp657:25", "to": "zozpp:26.1"}
-{"from": "tk:103", "to": "tk:372"}
-{"from": "tk:121", "to": "tk:351.7"}
-{"from": "tk:121", "to": "tk:76"}
-{"from": "tk:123", "to": "tk:372"}
-{"from": "tk:133.1", "to": "tk:47"}
-{"from": "tk:133.1", "to": "tk:48"}
-{"from": "tk:135", "to": "tk:372"}
-{"from": "tk:136", "to": "tk:372"}
-{"from": "tk:137", "to": "tk:155"}
-{"from": "tk:137", "to": "tk:157"}
-{"from": "tk:137", "to": "tk:77"}
-{"from": "tk:137", "to": "tk:81"}
-{"from": "tk:137", "to": "tk:83"}
-{"from": "tk:144", "to": "tk:135"}
-{"from": "tk:147", "to": "tk:372"}
-{"from": "tk:151", "to": "tk:60.2"}
-{"from": "tk:152", "to": "tk:153"}
-{"from": "tk:157", "to": "tk:72.2"}
-{"from": "tk:165", "to": "tk:66.1"}
-{"from": "tk:171", "to": "tk:373"}
-{"from": "tk:177", "to": "tk:173"}
-{"from": "tk:177", "to": "tk:176"}
-{"from": "tk:178", "to": "tk:77"}
-{"from": "tk:178", "to": "tk:81"}
-{"from": "tk:178", "to": "tk:83"}
-{"from": "tk:179", "to": "tk:351.7"}
-{"from": "tk:180", "to": "tk:81"}
-{"from": "tk:181.1", "to": "tk:192"}
-{"from": "tk:19.1", "to": "tk:15"}
-{"from": "tk:190", "to": "tk:372"}
-{"from": "tk:192", "to": "tk:189"}
-{"from": "tk:192", "to": "tk:336"}
-{"from": "tk:192", "to": "tk:348.11"}
-{"from": "tk:192", "to": "tk:81"}
-{"from": "tk:196", "to": "tk:372"}
-{"from": "tk:209.1", "to": "tk:225"}
-{"from": "tk:214", "to": "tk:372"}
-{"from": "tk:214.1", "to": "tk:216.1"}
-{"from": "tk:215", "to": "tk:227"}
-{"from": "tk:22.1", "to": "tk:22.2"}
-{"from": "tk:22.1", "to": "tk:22.3"}
-{"from": "tk:22.2", "to": "tk:372"}
-{"from": "tk:22.2", "to": "tk:65"}
-{"from": "tk:22.2", "to": "tk:68"}
-{"from": "tk:22.3", "to": "tk:22.1"}
-{"from": "tk:22.3", "to": "tk:22.2"}
-{"from": "tk:22.3", "to": "tk:372"}
-{"from": "tk:22.3", "to": "tk:62"}
-{"from": "tk:226", "to": "tk:227"}
-{"from": "tk:228", "to": "tk:227"}
-{"from": "tk:230", "to": "tk:229"}
-{"from": "tk:234", "to": "tk:66.1"}
-{"from": "tk:244", "to": "tk:243"}
-{"from": "tk:261", "to": "tk:336"}
-{"from": "tk:261", "to": "tk:81"}
-{"from": "tk:264.1", "to": "tk:336"}
-{"from": "tk:264.1", "to": "tk:81"}
-{"from": "tk:268", "to": "tk:63"}
-{"from": "tk:275", "to": "tk:59"}
-{"from": "tk:278", "to": "tk:145"}
-{"from": "tk:279", "to": "tk:278"}
-{"from": "tk:284", "to": "tk:142"}
-{"from": "tk:284", "to": "tk:252"}
-{"from": "tk:284", "to": "tk:73"}
-{"from": "tk:297", "to": "tk:372"}
-{"from": "tk:299", "to": "tk:372"}
-{"from": "tk:301", "to": "tk:372"}
-{"from": "tk:302", "to": "tk:372"}
-{"from": "tk:306", "to": "tk:74"}
-{"from": "tk:309.2", "to": "tk:312.9"}
-{"from": "tk:312.1", "to": "tk:312.9"}
-{"from": "tk:312.2", "to": "tk:312.3"}
-{"from": "tk:312.2", "to": "tk:65"}
-{"from": "tk:312.2", "to": "tk:68"}
-{"from": "tk:312.3", "to": "tk:62"}
-{"from": "tk:312.4", "to": "tk:312.9"}
-{"from": "tk:312.7", "to": "tk:214"}
-{"from": "tk:312.8", "to": "tk:312.3"}
-{"from": "tk:312.9", "to": "tk:157"}
-{"from": "tk:317", "to": "tk:316"}
-{"from": "tk:318", "to": "tk:81"}
-{"from": "tk:322", "to": "tk:321"}
-{"from": "tk:327.1", "to": "tk:252"}
-{"from": "tk:327.1", "to": "tk:59"}
-{"from": "tk:327.2", "to": "tk:57"}
-{"from": "tk:327.3", "to": "tk:57"}
-{"from": "tk:327.3", "to": "tk:65"}
-{"from": "tk:327.4", "to": "tk:327.6"}
-{"from": "tk:327.4", "to": "tk:72.2"}
-{"from": "tk:327.5", "to": "tk:76"}
-{"from": "tk:327.6", "to": "tk:327.4"}
-{"from": "tk:327.7", "to": "tk:178"}
-{"from": "tk:328.1", "to": "tk:65"}
-{"from": "tk:328.1", "to": "tk:76"}
-{"from": "tk:330.3", "to": "tk:220"}
-{"from": "tk:330.4", "to": "tk:76"}
-{"from": "tk:331.1", "to": "tk:331"}
-{"from": "tk:331.1", "to": "tk:76"}
-{"from": "tk:336", "to": "tk:332.1"}
-{"from": "tk:336.3", "to": "tk:336.2"}
-{"from": "tk:341", "to": "tk:77"}
-{"from": "tk:341.2", "to": "tk:1"}
-{"from": "tk:341.2", "to": "tk:3"}
-{"from": "tk:341.2", "to": "tk:341.1"}
-{"from": "tk:341.2", "to": "tk:4"}
-{"from": "tk:341.2", "to": "tk:66.1"}
-{"from": "tk:341.2", "to": "tk:76"}
-{"from": "tk:341.4", "to": "tk:229"}
-{"from": "tk:344", "to": "tk:59"}
-{"from": "tk:345.1", "to": "tk:133.1"}
-{"from": "tk:348.1", "to": "tk:20"}
-{"from": "tk:348.1", "to": "tk:252"}
-{"from": "tk:348.1", "to": "tk:8"}
-{"from": "tk:348.12", "to": "tk:192"}
-{"from": "tk:348.2", "to": "tk:348.12"}
-{"from": "tk:348.2", "to": "tk:57"}
-{"from": "tk:348.4", "to": "tk:348.2"}
-{"from": "tk:348.4", "to": "tk:348.7"}
-{"from": "tk:348.5", "to": "tk:155"}
-{"from": "tk:348.7", "to": "tk:348.4"}
-{"from": "tk:348.8", "to": "tk:348.4"}
-{"from": "tk:348.8", "to": "tk:92"}
-{"from": "tk:349.3", "to": "tk:127"}
-{"from": "tk:349.3", "to": "tk:178"}
-{"from": "tk:349.3", "to": "tk:181"}
-{"from": "tk:349.3", "to": "tk:318"}
-{"from": "tk:349.3", "to": "tk:78"}
-{"from": "tk:349.4", "to": "tk:157"}
-{"from": "tk:349.4", "to": "tk:181"}
-{"from": "tk:349.6", "to": "tk:83"}
-{"from": "tk:351", "to": "tk:113"}
-{"from": "tk:351", "to": "tk:153"}
-{"from": "tk:351", "to": "tk:252"}
-{"from": "tk:351", "to": "tk:268"}
-{"from": "tk:351", "to": "tk:94"}
-{"from": "tk:351", "to": "tk:96"}
-{"from": "tk:351.1", "to": "tk:331"}
-{"from": "tk:351.1", "to": "tk:76"}
-{"from": "tk:351.6", "to": "tk:219"}
-{"from": "tk:351.7", "to": "tk:59"}
-{"from": "tk:351.7", "to": "tk:81"}
-{"from": "tk:357", "to": "tk:360.1"}
-{"from": "tk:360.1", "to": "tk:349.4"}
-{"from": "tk:373", "to": "tk:81"}
-{"from": "tk:374", "to": "tk:373"}
-{"from": "tk:374", "to": "tk:81"}
-{"from": "tk:376", "to": "tk:374"}
-{"from": "tk:376", "to": "tk:81"}
-{"from": "tk:392", "to": "tk:66.1"}
-{"from": "tk:394", "to": "tk:66.1"}
-{"from": "tk:398", "to": "tk:400"}
-{"from": "tk:399", "to": "tk:29"}
-{"from": "tk:399", "to": "tk:31"}
-{"from": "tk:399", "to": "tk:40"}
-{"from": "tk:40", "to": "tk:33"}
-{"from": "tk:40", "to": "tk:37"}
-{"from": "tk:400", "to": "tk:34"}
-{"from": "tk:404", "to": "tk:413"}
-{"from": "tk:407", "to": "tk:413"}
-{"from": "tk:409", "to": "tk:406"}
-{"from": "tk:409", "to": "tk:408"}
-{"from": "tk:409", "to": "tk:413"}
-{"from": "tk:410", "to": "tk:34"}
-{"from": "tk:410", "to": "tk:401"}
-{"from": "tk:411", "to": "tk:34"}
-{"from": "tk:414", "to": "tk:413"}
-{"from": "tk:421", "to": "tk:133"}
-{"from": "tk:422", "to": "tk:1"}
-{"from": "tk:422", "to": "tk:117"}
-{"from": "tk:422", "to": "tk:16"}
-{"from": "tk:422", "to": "tk:168"}
-{"from": "tk:422", "to": "tk:274"}
-{"from": "tk:422", "to": "tk:3"}
-{"from": "tk:422", "to": "tk:301"}
-{"from": "tk:422", "to": "tk:346"}
-{"from": "tk:422", "to": "tk:352"}
-{"from": "tk:422", "to": "tk:395"}
-{"from": "tk:422", "to": "tk:68"}
-{"from": "tk:422", "to": "tk:73"}
-{"from": "tk:48", "to": "tk:34"}
-{"from": "tk:53.1", "to": "tk:29"}
-{"from": "tk:53.1", "to": "tk:31"}
-{"from": "tk:58", "to": "tk:59"}
-{"from": "tk:60.2", "to": "tk:151"}
-{"from": "tk:62", "to": "tk:66.1"}
-{"from": "tk:62", "to": "tk:84.1"}
-{"from": "tk:65", "to": "tk:66.1"}
-{"from": "tk:70", "to": "tk:67"}
-{"from": "tk:72.1", "to": "tk:72.2"}
-{"from": "tk:72.1", "to": "tk:77"}
-{"from": "tk:73", "to": "tk:77"}
-{"from": "tk:74", "to": "tk:372"}
-{"from": "tk:74", "to": "tk:77"}
-{"from": "tk:74", "to": "tk:81"}
-{"from": "tk:75", "to": "tk:77"}
-{"from": "tk:77", "to": "tk:71"}
-{"from": "tk:77", "to": "tk:72.1"}
-{"from": "tk:77", "to": "tk:73"}
-{"from": "tk:77", "to": "tk:74"}
-{"from": "tk:77", "to": "tk:75"}
-{"from": "tk:77", "to": "tk:78"}
-{"from": "tk:77", "to": "tk:79"}
-{"from": "tk:77", "to": "tk:80"}
-{"from": "tk:77", "to": "tk:81"}
-{"from": "tk:77", "to": "tk:83"}
-{"from": "tk:77", "to": "tk:84"}
-{"from": "tk:8", "to": "tk:372"}
-{"from": "tk:80", "to": "tk:66.1"}
-{"from": "tk:82", "to": "tk:373"}
-{"from": "tk:82", "to": "tk:81"}
-{"from": "tk:84", "to": "tk:77"}
-{"from": "tk:84.1", "to": "tk:140"}
-{"from": "tk:84.1", "to": "tk:261"}
-{"from": "tk:84.1", "to": "tk:66.1"}
-{"from": "tk:84.1", "to": "tk:81"}
-{"from": "tk:84.1", "to": "tk:83"}
-{"from": "tk:94", "to": "tk:92"}
-{"from": "tk:97", "to": "tk:101"}
-{"from": "tk:97", "to": "tk:99"}
-{"from": "zozpp:10", "to": "zozpp:7"}
-{"from": "zozpp:10.1", "to": "zozpp:10"}
-{"from": "zozpp:10.1", "to": "zozpp:8"}
-{"from": "zozpp:10.1", "to": "zozpp:9"}
-{"from": "zozpp:12", "to": "zozpp:14"}
-{"from": "zozpp:12", "to": "zozpp:18"}
-{"from": "zozpp:12", "to": "zozpp:29"}
-{"from": "zozpp:13", "to": "zozpp:23"}
-{"from": "zozpp:14", "to": "zozpp:5"}
-{"from": "zozpp:16", "to": "zozpp:13"}
-{"from": "zozpp:16", "to": "zozpp:16.1"}
-{"from": "zozpp:16", "to": "zozpp:17"}
-{"from": "zozpp:16", "to": "zozpp:18"}
-{"from": "zozpp:16", "to": "zozpp:29"}
-{"from": "zozpp:16", "to": "zozpp:32"}
-{"from": "zozpp:18", "to": "zozpp:20"}
-{"from": "zozpp:18", "to": "zozpp:21"}
-{"from": "zozpp:18", "to": "zozpp:22"}
-{"from": "zozpp:18", "to": "zozpp:23"}
-{"from": "zozpp:18", "to": "zozpp:24"}
-{"from": "zozpp:19", "to": "zozpp:10"}
-{"from": "zozpp:19", "to": "zozpp:18"}
-{"from": "zozpp:21", "to": "zozpp:20"}
-{"from": "zozpp:23", "to": "zozpp:18"}
-{"from": "zozpp:23", "to": "zozpp:20"}
-{"from": "zozpp:23", "to": "zozpp:21"}
-{"from": "zozpp:23", "to": "zozpp:22"}
-{"from": "zozpp:26.1", "to": "zozpp:10"}
-{"from": "zozpp:26.1", "to": "zozpp:18"}
-{"from": "zozpp:26.1", "to": "zozpp:24"}
-{"from": "zozpp:28", "to": "zozpp:24"}
-{"from": "zozpp:29", "to": "zozpp:24"}
-{"from": "zozpp:30", "to": "zozpp:28"}
-{"from": "zozpp:30", "to": "zozpp:29"}
-{"from": "zozpp:31", "to": "zozpp:28"}
-{"from": "zozpp:31", "to": "zozpp:29"}
-{"from": "zozpp:5", "to": "zozpp:18"}
-{"from": "zozpp:5", "to": "zozpp:19"}
-{"from": "zozpp:5", "to": "zozpp:29"}
-{"from": "zozpp:7", "to": "zozpp:14"}
-{"from": "zozpp:7", "to": "zozpp:5"}
+{"from": "gk:464", "to": "gk:456", "type": "refers_to"}
+{"from": "gk:466", "to": "gk:483", "type": "refers_to"}
+{"from": "gk:470", "to": "gk:469", "type": "refers_to"}
+{"from": "gk:471", "to": "gk:457", "type": "refers_to"}
+{"from": "gk:471", "to": "gk:476", "type": "refers_to"}
+{"from": "gk:471", "to": "gk:483", "type": "refers_to"}
+{"from": "gk:475", "to": "gk:479", "type": "refers_to"}
+{"from": "gk:480", "to": "gk:478", "type": "refers_to"}
+{"from": "gk:480", "to": "gk:479", "type": "refers_to"}
+{"from": "gk:482", "to": "gk:475", "type": "refers_to"}
+{"from": "gk:487", "to": "gk:457", "type": "refers_to"}
+{"from": "gk:489", "to": "gk:488", "type": "refers_to"}
+{"from": "gk:500", "to": "gk:487", "type": "refers_to"}
+{"from": "gk:500", "to": "gk:488", "type": "refers_to"}
+{"from": "gk:501", "to": "gk:491", "type": "refers_to"}
+{"from": "gk:503", "to": "gk:475", "type": "refers_to"}
+{"from": "gk:609", "to": "gk:624", "type": "refers_to"}
+{"from": "gk:621", "to": "gk:610", "type": "refers_to"}
+{"from": "gk:627", "to": "gk:621", "type": "refers_to"}
+{"from": "gk:632", "to": "gk:621", "type": "refers_to"}
+{"from": "gk:633", "to": "gk:609", "type": "refers_to"}
+{"from": "gk:642", "to": "gk:621", "type": "refers_to"}
+{"from": "gk:643", "to": "gk:609", "type": "refers_to"}
+{"from": "gk:664", "to": "gk:656", "type": "refers_to"}
+{"from": "gk:664", "to": "gk:657", "type": "refers_to"}
+{"from": "gk:664", "to": "gk:659", "type": "refers_to"}
+{"from": "gk:672", "to": "gk:678", "type": "refers_to"}
+{"from": "gk:672", "to": "gk:681", "type": "refers_to"}
+{"from": "gk:672", "to": "gk:685", "type": "refers_to"}
+{"from": "gk:672", "to": "gk:686", "type": "refers_to"}
+{"from": "gk:677", "to": "gk:679", "type": "refers_to"}
+{"from": "gk:683", "to": "gk:677", "type": "refers_to"}
+{"from": "gk:683", "to": "gk:680", "type": "refers_to"}
+{"from": "gk:683", "to": "gk:684", "type": "refers_to"}
+{"from": "gk:683", "to": "gk:685", "type": "refers_to"}
+{"from": "gk:683", "to": "gk:686", "type": "refers_to"}
+{"from": "gk:683", "to": "gk:687", "type": "refers_to"}
+{"from": "koap:14.15", "to": "pp657:1", "type": "refers_to"}
+{"from": "koap:14.4", "to": "zozpp:4", "type": "refers_to"}
+{"from": "koap:14.7", "to": "zozpp:10", "type": "refers_to"}
+{"from": "koap:14.8", "to": "zozpp:10", "type": "refers_to"}
+{"from": "koap:14.8", "to": "zozpp:16", "type": "refers_to"}
+{"from": "koap:5.27", "to": "koap:5.27.1", "type": "refers_to"}
+{"from": "koap:5.27", "to": "tk:236", "type": "refers_to"}
+{"from": "koap:5.27", "to": "tk:419", "type": "refers_to"}
+{"from": "koap:5.27", "to": "tk:67", "type": "refers_to"}
+{"from": "plenum17:13", "to": "zozpp:18", "type": "explains"}
+{"from": "plenum17:13", "to": "zozpp:20", "type": "explains"}
+{"from": "plenum17:13", "to": "zozpp:29", "type": "explains"}
+{"from": "plenum17:14", "to": "zozpp:18", "type": "explains"}
+{"from": "plenum17:15", "to": "zozpp:17", "type": "explains"}
+{"from": "plenum17:19", "to": "zozpp:40", "type": "explains"}
+{"from": "plenum17:2", "to": "zozpp:10", "type": "explains"}
+{"from": "plenum17:2", "to": "zozpp:11", "type": "explains"}
+{"from": "plenum17:2", "to": "zozpp:12", "type": "explains"}
+{"from": "plenum17:2", "to": "zozpp:13", "type": "explains"}
+{"from": "plenum17:2", "to": "zozpp:14", "type": "explains"}
+{"from": "plenum17:2", "to": "zozpp:15", "type": "explains"}
+{"from": "plenum17:2", "to": "zozpp:17", "type": "explains"}
+{"from": "plenum17:2", "to": "zozpp:39", "type": "explains"}
+{"from": "plenum17:2", "to": "zozpp:8", "type": "explains"}
+{"from": "plenum17:2", "to": "zozpp:9", "type": "explains"}
+{"from": "plenum17:20", "to": "zozpp:44", "type": "explains"}
+{"from": "plenum17:20", "to": "zozpp:45", "type": "explains"}
+{"from": "plenum17:20", "to": "zozpp:46", "type": "explains"}
+{"from": "plenum17:22", "to": "zozpp:17", "type": "explains"}
+{"from": "plenum17:25", "to": "zozpp:17", "type": "explains"}
+{"from": "plenum17:26", "to": "zozpp:17", "type": "explains"}
+{"from": "plenum17:26", "to": "zozpp:32", "type": "explains"}
+{"from": "plenum17:28", "to": "zozpp:13", "type": "explains"}
+{"from": "plenum17:28", "to": "zozpp:14", "type": "explains"}
+{"from": "plenum17:28", "to": "zozpp:18", "type": "explains"}
+{"from": "plenum17:28", "to": "zozpp:19", "type": "explains"}
+{"from": "plenum17:28", "to": "zozpp:23.1", "type": "explains"}
+{"from": "plenum17:28", "to": "zozpp:28", "type": "explains"}
+{"from": "plenum17:28", "to": "zozpp:29", "type": "explains"}
+{"from": "plenum17:3", "to": "zozpp:12", "type": "explains"}
+{"from": "plenum17:31", "to": "zozpp:13", "type": "explains"}
+{"from": "plenum17:32", "to": "zozpp:18", "type": "explains"}
+{"from": "plenum17:32", "to": "zozpp:20", "type": "explains"}
+{"from": "plenum17:32", "to": "zozpp:21", "type": "explains"}
+{"from": "plenum17:32", "to": "zozpp:22", "type": "explains"}
+{"from": "plenum17:32", "to": "zozpp:23", "type": "explains"}
+{"from": "plenum17:32", "to": "zozpp:23.1", "type": "explains"}
+{"from": "plenum17:32", "to": "zozpp:28", "type": "explains"}
+{"from": "plenum17:32", "to": "zozpp:30", "type": "explains"}
+{"from": "plenum17:32", "to": "zozpp:31", "type": "explains"}
+{"from": "plenum17:34", "to": "zozpp:23", "type": "explains"}
+{"from": "plenum17:34", "to": "zozpp:28", "type": "explains"}
+{"from": "plenum17:34", "to": "zozpp:30", "type": "explains"}
+{"from": "plenum17:34", "to": "zozpp:31", "type": "explains"}
+{"from": "plenum17:35", "to": "zozpp:14", "type": "explains"}
+{"from": "plenum17:35", "to": "zozpp:18", "type": "explains"}
+{"from": "plenum17:36", "to": "zozpp:12", "type": "explains"}
+{"from": "plenum17:37", "to": "zozpp:35", "type": "explains"}
+{"from": "plenum17:38", "to": "gk:475", "type": "explains"}
+{"from": "plenum17:38", "to": "gk:503", "type": "explains"}
+{"from": "plenum17:38", "to": "zozpp:18", "type": "explains"}
+{"from": "plenum17:38", "to": "zozpp:20", "type": "explains"}
+{"from": "plenum17:38", "to": "zozpp:21", "type": "explains"}
+{"from": "plenum17:38", "to": "zozpp:22", "type": "explains"}
+{"from": "plenum17:38", "to": "zozpp:4", "type": "explains"}
+{"from": "plenum17:39", "to": "gk:469", "type": "explains"}
+{"from": "plenum17:40", "to": "gk:503", "type": "explains"}
+{"from": "plenum17:40", "to": "zozpp:18", "type": "explains"}
+{"from": "plenum17:43", "to": "gk:493", "type": "explains"}
+{"from": "plenum17:43", "to": "zozpp:18", "type": "explains"}
+{"from": "plenum17:44", "to": "zozpp:10", "type": "explains"}
+{"from": "plenum17:44", "to": "zozpp:12", "type": "explains"}
+{"from": "plenum17:44", "to": "zozpp:8", "type": "explains"}
+{"from": "plenum17:46", "to": "zozpp:13", "type": "explains"}
+{"from": "plenum17:47", "to": "zozpp:13", "type": "explains"}
+{"from": "plenum17:48", "to": "zozpp:37", "type": "explains"}
+{"from": "plenum17:50", "to": "gk:638", "type": "explains"}
+{"from": "plenum17:53", "to": "zozpp:46", "type": "explains"}
+{"from": "pp657:21", "to": "zozpp:26.1", "type": "refers_to"}
+{"from": "pp657:25", "to": "zozpp:26.1", "type": "refers_to"}
+{"from": "tk:103", "to": "tk:372", "type": "refers_to"}
+{"from": "tk:121", "to": "tk:351.7", "type": "refers_to"}
+{"from": "tk:121", "to": "tk:76", "type": "refers_to"}
+{"from": "tk:123", "to": "tk:372", "type": "refers_to"}
+{"from": "tk:133.1", "to": "tk:47", "type": "refers_to"}
+{"from": "tk:133.1", "to": "tk:48", "type": "refers_to"}
+{"from": "tk:135", "to": "tk:372", "type": "refers_to"}
+{"from": "tk:136", "to": "tk:372", "type": "refers_to"}
+{"from": "tk:137", "to": "tk:155", "type": "refers_to"}
+{"from": "tk:137", "to": "tk:157", "type": "refers_to"}
+{"from": "tk:137", "to": "tk:77", "type": "refers_to"}
+{"from": "tk:137", "to": "tk:81", "type": "refers_to"}
+{"from": "tk:137", "to": "tk:83", "type": "refers_to"}
+{"from": "tk:144", "to": "tk:135", "type": "refers_to"}
+{"from": "tk:147", "to": "tk:372", "type": "refers_to"}
+{"from": "tk:151", "to": "tk:60.2", "type": "refers_to"}
+{"from": "tk:152", "to": "tk:153", "type": "refers_to"}
+{"from": "tk:157", "to": "tk:72.2", "type": "refers_to"}
+{"from": "tk:165", "to": "tk:66.1", "type": "refers_to"}
+{"from": "tk:171", "to": "tk:373", "type": "refers_to"}
+{"from": "tk:177", "to": "tk:173", "type": "refers_to"}
+{"from": "tk:177", "to": "tk:174", "type": "refers_to"}
+{"from": "tk:177", "to": "tk:176", "type": "refers_to"}
+{"from": "tk:178", "to": "tk:77", "type": "refers_to"}
+{"from": "tk:178", "to": "tk:81", "type": "refers_to"}
+{"from": "tk:178", "to": "tk:83", "type": "refers_to"}
+{"from": "tk:179", "to": "tk:351.7", "type": "refers_to"}
+{"from": "tk:180", "to": "tk:81", "type": "refers_to"}
+{"from": "tk:181.1", "to": "tk:192", "type": "refers_to"}
+{"from": "tk:19.1", "to": "tk:15", "type": "refers_to"}
+{"from": "tk:190", "to": "tk:372", "type": "refers_to"}
+{"from": "tk:192", "to": "tk:189", "type": "refers_to"}
+{"from": "tk:192", "to": "tk:336", "type": "refers_to"}
+{"from": "tk:192", "to": "tk:348.11", "type": "refers_to"}
+{"from": "tk:192", "to": "tk:81", "type": "refers_to"}
+{"from": "tk:196", "to": "tk:372", "type": "refers_to"}
+{"from": "tk:209.1", "to": "tk:225", "type": "refers_to"}
+{"from": "tk:214", "to": "tk:372", "type": "refers_to"}
+{"from": "tk:214.1", "to": "tk:216.1", "type": "refers_to"}
+{"from": "tk:215", "to": "tk:227", "type": "refers_to"}
+{"from": "tk:22.1", "to": "tk:22.2", "type": "refers_to"}
+{"from": "tk:22.1", "to": "tk:22.3", "type": "refers_to"}
+{"from": "tk:22.2", "to": "tk:372", "type": "refers_to"}
+{"from": "tk:22.2", "to": "tk:65", "type": "refers_to"}
+{"from": "tk:22.2", "to": "tk:68", "type": "refers_to"}
+{"from": "tk:22.3", "to": "tk:22.1", "type": "refers_to"}
+{"from": "tk:22.3", "to": "tk:22.2", "type": "refers_to"}
+{"from": "tk:22.3", "to": "tk:372", "type": "refers_to"}
+{"from": "tk:22.3", "to": "tk:62", "type": "refers_to"}
+{"from": "tk:226", "to": "tk:227", "type": "refers_to"}
+{"from": "tk:228", "to": "tk:227", "type": "refers_to"}
+{"from": "tk:230", "to": "tk:229", "type": "refers_to"}
+{"from": "tk:234", "to": "tk:66.1", "type": "refers_to"}
+{"from": "tk:244", "to": "tk:243", "type": "refers_to"}
+{"from": "tk:261", "to": "tk:336", "type": "refers_to"}
+{"from": "tk:261", "to": "tk:81", "type": "refers_to"}
+{"from": "tk:264.1", "to": "tk:336", "type": "refers_to"}
+{"from": "tk:264.1", "to": "tk:81", "type": "refers_to"}
+{"from": "tk:268", "to": "tk:63", "type": "refers_to"}
+{"from": "tk:275", "to": "tk:59", "type": "refers_to"}
+{"from": "tk:278", "to": "tk:145", "type": "refers_to"}
+{"from": "tk:279", "to": "tk:278", "type": "refers_to"}
+{"from": "tk:284", "to": "tk:142", "type": "refers_to"}
+{"from": "tk:284", "to": "tk:252", "type": "refers_to"}
+{"from": "tk:284", "to": "tk:73", "type": "refers_to"}
+{"from": "tk:297", "to": "tk:372", "type": "refers_to"}
+{"from": "tk:299", "to": "tk:372", "type": "refers_to"}
+{"from": "tk:301", "to": "tk:372", "type": "refers_to"}
+{"from": "tk:302", "to": "tk:372", "type": "refers_to"}
+{"from": "tk:306", "to": "tk:74", "type": "refers_to"}
+{"from": "tk:309.2", "to": "tk:312.9", "type": "refers_to"}
+{"from": "tk:312.1", "to": "tk:312.9", "type": "refers_to"}
+{"from": "tk:312.2", "to": "tk:312.3", "type": "refers_to"}
+{"from": "tk:312.2", "to": "tk:65", "type": "refers_to"}
+{"from": "tk:312.2", "to": "tk:68", "type": "refers_to"}
+{"from": "tk:312.3", "to": "tk:62", "type": "refers_to"}
+{"from": "tk:312.4", "to": "tk:312.9", "type": "refers_to"}
+{"from": "tk:312.7", "to": "tk:214", "type": "refers_to"}
+{"from": "tk:312.8", "to": "tk:312.3", "type": "refers_to"}
+{"from": "tk:312.9", "to": "tk:157", "type": "refers_to"}
+{"from": "tk:317", "to": "tk:316", "type": "refers_to"}
+{"from": "tk:318", "to": "tk:81", "type": "refers_to"}
+{"from": "tk:322", "to": "tk:321", "type": "refers_to"}
+{"from": "tk:327.1", "to": "tk:252", "type": "refers_to"}
+{"from": "tk:327.1", "to": "tk:59", "type": "refers_to"}
+{"from": "tk:327.2", "to": "tk:57", "type": "refers_to"}
+{"from": "tk:327.3", "to": "tk:57", "type": "refers_to"}
+{"from": "tk:327.3", "to": "tk:65", "type": "refers_to"}
+{"from": "tk:327.4", "to": "tk:327.6", "type": "refers_to"}
+{"from": "tk:327.4", "to": "tk:72.2", "type": "refers_to"}
+{"from": "tk:327.5", "to": "tk:76", "type": "refers_to"}
+{"from": "tk:327.6", "to": "tk:327.4", "type": "refers_to"}
+{"from": "tk:327.7", "to": "tk:178", "type": "refers_to"}
+{"from": "tk:328.1", "to": "tk:65", "type": "refers_to"}
+{"from": "tk:328.1", "to": "tk:76", "type": "refers_to"}
+{"from": "tk:330.3", "to": "tk:220", "type": "refers_to"}
+{"from": "tk:330.4", "to": "tk:76", "type": "refers_to"}
+{"from": "tk:331.1", "to": "tk:331", "type": "refers_to"}
+{"from": "tk:331.1", "to": "tk:76", "type": "refers_to"}
+{"from": "tk:336", "to": "tk:332.1", "type": "refers_to"}
+{"from": "tk:336.3", "to": "tk:336.2", "type": "refers_to"}
+{"from": "tk:341", "to": "tk:77", "type": "refers_to"}
+{"from": "tk:341.2", "to": "tk:1", "type": "refers_to"}
+{"from": "tk:341.2", "to": "tk:3", "type": "refers_to"}
+{"from": "tk:341.2", "to": "tk:341.1", "type": "refers_to"}
+{"from": "tk:341.2", "to": "tk:4", "type": "refers_to"}
+{"from": "tk:341.2", "to": "tk:66.1", "type": "refers_to"}
+{"from": "tk:341.2", "to": "tk:76", "type": "refers_to"}
+{"from": "tk:341.4", "to": "tk:229", "type": "refers_to"}
+{"from": "tk:344", "to": "tk:59", "type": "refers_to"}
+{"from": "tk:345.1", "to": "tk:133.1", "type": "refers_to"}
+{"from": "tk:348.1", "to": "tk:20", "type": "refers_to"}
+{"from": "tk:348.1", "to": "tk:252", "type": "refers_to"}
+{"from": "tk:348.1", "to": "tk:8", "type": "refers_to"}
+{"from": "tk:348.12", "to": "tk:192", "type": "refers_to"}
+{"from": "tk:348.2", "to": "tk:348.12", "type": "refers_to"}
+{"from": "tk:348.2", "to": "tk:57", "type": "refers_to"}
+{"from": "tk:348.4", "to": "tk:348.2", "type": "refers_to"}
+{"from": "tk:348.4", "to": "tk:348.7", "type": "refers_to"}
+{"from": "tk:348.5", "to": "tk:155", "type": "refers_to"}
+{"from": "tk:348.7", "to": "tk:348.4", "type": "refers_to"}
+{"from": "tk:348.8", "to": "tk:348.4", "type": "refers_to"}
+{"from": "tk:348.8", "to": "tk:92", "type": "refers_to"}
+{"from": "tk:349.3", "to": "tk:127", "type": "refers_to"}
+{"from": "tk:349.3", "to": "tk:178", "type": "refers_to"}
+{"from": "tk:349.3", "to": "tk:181", "type": "refers_to"}
+{"from": "tk:349.3", "to": "tk:318", "type": "refers_to"}
+{"from": "tk:349.3", "to": "tk:78", "type": "refers_to"}
+{"from": "tk:349.4", "to": "tk:157", "type": "refers_to"}
+{"from": "tk:349.4", "to": "tk:181", "type": "refers_to"}
+{"from": "tk:349.6", "to": "tk:83", "type": "refers_to"}
+{"from": "tk:351", "to": "tk:113", "type": "refers_to"}
+{"from": "tk:351", "to": "tk:153", "type": "refers_to"}
+{"from": "tk:351", "to": "tk:252", "type": "refers_to"}
+{"from": "tk:351", "to": "tk:268", "type": "refers_to"}
+{"from": "tk:351", "to": "tk:94", "type": "refers_to"}
+{"from": "tk:351", "to": "tk:96", "type": "refers_to"}
+{"from": "tk:351.1", "to": "tk:331", "type": "refers_to"}
+{"from": "tk:351.1", "to": "tk:76", "type": "refers_to"}
+{"from": "tk:351.6", "to": "tk:219", "type": "refers_to"}
+{"from": "tk:351.7", "to": "tk:59", "type": "refers_to"}
+{"from": "tk:351.7", "to": "tk:81", "type": "refers_to"}
+{"from": "tk:357", "to": "tk:360.1", "type": "refers_to"}
+{"from": "tk:360.1", "to": "tk:349.4", "type": "refers_to"}
+{"from": "tk:373", "to": "tk:81", "type": "refers_to"}
+{"from": "tk:374", "to": "tk:373", "type": "refers_to"}
+{"from": "tk:374", "to": "tk:81", "type": "refers_to"}
+{"from": "tk:376", "to": "tk:374", "type": "refers_to"}
+{"from": "tk:376", "to": "tk:81", "type": "refers_to"}
+{"from": "tk:392", "to": "tk:66.1", "type": "refers_to"}
+{"from": "tk:394", "to": "tk:66.1", "type": "refers_to"}
+{"from": "tk:398", "to": "tk:400", "type": "refers_to"}
+{"from": "tk:399", "to": "tk:29", "type": "refers_to"}
+{"from": "tk:399", "to": "tk:30", "type": "refers_to"}
+{"from": "tk:399", "to": "tk:31", "type": "refers_to"}
+{"from": "tk:399", "to": "tk:40", "type": "refers_to"}
+{"from": "tk:40", "to": "tk:33", "type": "refers_to"}
+{"from": "tk:40", "to": "tk:37", "type": "refers_to"}
+{"from": "tk:400", "to": "tk:34", "type": "refers_to"}
+{"from": "tk:404", "to": "tk:413", "type": "refers_to"}
+{"from": "tk:407", "to": "tk:413", "type": "refers_to"}
+{"from": "tk:409", "to": "tk:406", "type": "refers_to"}
+{"from": "tk:409", "to": "tk:408", "type": "refers_to"}
+{"from": "tk:409", "to": "tk:413", "type": "refers_to"}
+{"from": "tk:410", "to": "tk:34", "type": "refers_to"}
+{"from": "tk:410", "to": "tk:401", "type": "refers_to"}
+{"from": "tk:411", "to": "tk:34", "type": "refers_to"}
+{"from": "tk:414", "to": "tk:413", "type": "refers_to"}
+{"from": "tk:421", "to": "tk:133", "type": "refers_to"}
+{"from": "tk:422", "to": "tk:1", "type": "refers_to"}
+{"from": "tk:422", "to": "tk:117", "type": "refers_to"}
+{"from": "tk:422", "to": "tk:16", "type": "refers_to"}
+{"from": "tk:422", "to": "tk:168", "type": "refers_to"}
+{"from": "tk:422", "to": "tk:274", "type": "refers_to"}
+{"from": "tk:422", "to": "tk:3", "type": "refers_to"}
+{"from": "tk:422", "to": "tk:301", "type": "refers_to"}
+{"from": "tk:422", "to": "tk:346", "type": "refers_to"}
+{"from": "tk:422", "to": "tk:352", "type": "refers_to"}
+{"from": "tk:422", "to": "tk:395", "type": "refers_to"}
+{"from": "tk:422", "to": "tk:68", "type": "refers_to"}
+{"from": "tk:422", "to": "tk:73", "type": "refers_to"}
+{"from": "tk:48", "to": "tk:34", "type": "refers_to"}
+{"from": "tk:53.1", "to": "tk:29", "type": "refers_to"}
+{"from": "tk:53.1", "to": "tk:30", "type": "refers_to"}
+{"from": "tk:53.1", "to": "tk:31", "type": "refers_to"}
+{"from": "tk:58", "to": "tk:59", "type": "refers_to"}
+{"from": "tk:60.2", "to": "tk:151", "type": "refers_to"}
+{"from": "tk:62", "to": "tk:66.1", "type": "refers_to"}
+{"from": "tk:62", "to": "tk:84.1", "type": "refers_to"}
+{"from": "tk:65", "to": "tk:66.1", "type": "refers_to"}
+{"from": "tk:70", "to": "tk:67", "type": "refers_to"}
+{"from": "tk:72.1", "to": "tk:72.2", "type": "refers_to"}
+{"from": "tk:72.1", "to": "tk:77", "type": "refers_to"}
+{"from": "tk:73", "to": "tk:77", "type": "refers_to"}
+{"from": "tk:74", "to": "tk:372", "type": "refers_to"}
+{"from": "tk:74", "to": "tk:77", "type": "refers_to"}
+{"from": "tk:74", "to": "tk:81", "type": "refers_to"}
+{"from": "tk:75", "to": "tk:77", "type": "refers_to"}
+{"from": "tk:77", "to": "tk:71", "type": "refers_to"}
+{"from": "tk:77", "to": "tk:72.1", "type": "refers_to"}
+{"from": "tk:77", "to": "tk:73", "type": "refers_to"}
+{"from": "tk:77", "to": "tk:74", "type": "refers_to"}
+{"from": "tk:77", "to": "tk:75", "type": "refers_to"}
+{"from": "tk:77", "to": "tk:78", "type": "refers_to"}
+{"from": "tk:77", "to": "tk:79", "type": "refers_to"}
+{"from": "tk:77", "to": "tk:80", "type": "refers_to"}
+{"from": "tk:77", "to": "tk:81", "type": "refers_to"}
+{"from": "tk:77", "to": "tk:83", "type": "refers_to"}
+{"from": "tk:77", "to": "tk:84", "type": "refers_to"}
+{"from": "tk:8", "to": "tk:372", "type": "refers_to"}
+{"from": "tk:80", "to": "tk:66.1", "type": "refers_to"}
+{"from": "tk:82", "to": "tk:373", "type": "refers_to"}
+{"from": "tk:82", "to": "tk:81", "type": "refers_to"}
+{"from": "tk:84", "to": "tk:77", "type": "refers_to"}
+{"from": "tk:84.1", "to": "tk:140", "type": "refers_to"}
+{"from": "tk:84.1", "to": "tk:261", "type": "refers_to"}
+{"from": "tk:84.1", "to": "tk:66.1", "type": "refers_to"}
+{"from": "tk:84.1", "to": "tk:81", "type": "refers_to"}
+{"from": "tk:84.1", "to": "tk:83", "type": "refers_to"}
+{"from": "tk:94", "to": "tk:92", "type": "refers_to"}
+{"from": "tk:97", "to": "tk:101", "type": "refers_to"}
+{"from": "tk:97", "to": "tk:99", "type": "refers_to"}
+{"from": "zozpp:10", "to": "zozpp:7", "type": "refers_to"}
+{"from": "zozpp:10.1", "to": "zozpp:10", "type": "refers_to"}
+{"from": "zozpp:10.1", "to": "zozpp:8", "type": "refers_to"}
+{"from": "zozpp:10.1", "to": "zozpp:9", "type": "refers_to"}
+{"from": "zozpp:12", "to": "zozpp:14", "type": "refers_to"}
+{"from": "zozpp:12", "to": "zozpp:18", "type": "refers_to"}
+{"from": "zozpp:12", "to": "zozpp:29", "type": "refers_to"}
+{"from": "zozpp:13", "to": "zozpp:23", "type": "refers_to"}
+{"from": "zozpp:14", "to": "zozpp:5", "type": "refers_to"}
+{"from": "zozpp:16", "to": "zozpp:13", "type": "refers_to"}
+{"from": "zozpp:16", "to": "zozpp:16.1", "type": "refers_to"}
+{"from": "zozpp:16", "to": "zozpp:17", "type": "refers_to"}
+{"from": "zozpp:16", "to": "zozpp:18", "type": "refers_to"}
+{"from": "zozpp:16", "to": "zozpp:29", "type": "refers_to"}
+{"from": "zozpp:16", "to": "zozpp:32", "type": "refers_to"}
+{"from": "zozpp:18", "to": "pp924:perechen", "type": "refers_to"}
+{"from": "zozpp:18", "to": "zozpp:20", "type": "refers_to"}
+{"from": "zozpp:18", "to": "zozpp:21", "type": "refers_to"}
+{"from": "zozpp:18", "to": "zozpp:22", "type": "refers_to"}
+{"from": "zozpp:18", "to": "zozpp:23", "type": "refers_to"}
+{"from": "zozpp:18", "to": "zozpp:24", "type": "refers_to"}
+{"from": "zozpp:19", "to": "zozpp:10", "type": "refers_to"}
+{"from": "zozpp:19", "to": "zozpp:18", "type": "refers_to"}
+{"from": "zozpp:20", "to": "pp657:remont", "type": "refers_to"}
+{"from": "zozpp:21", "to": "zozpp:20", "type": "refers_to"}
+{"from": "zozpp:23", "to": "zozpp:18", "type": "refers_to"}
+{"from": "zozpp:23", "to": "zozpp:20", "type": "refers_to"}
+{"from": "zozpp:23", "to": "zozpp:21", "type": "refers_to"}
+{"from": "zozpp:23", "to": "zozpp:22", "type": "refers_to"}
+{"from": "zozpp:25", "to": "pp657:obmen", "type": "refers_to"}
+{"from": "zozpp:26.1", "to": "zozpp:10", "type": "refers_to"}
+{"from": "zozpp:26.1", "to": "zozpp:18", "type": "refers_to"}
+{"from": "zozpp:26.1", "to": "zozpp:19", "type": "refers_to"}
+{"from": "zozpp:26.1", "to": "zozpp:20", "type": "refers_to"}
+{"from": "zozpp:26.1", "to": "zozpp:21", "type": "refers_to"}
+{"from": "zozpp:26.1", "to": "zozpp:22", "type": "refers_to"}
+{"from": "zozpp:26.1", "to": "zozpp:23", "type": "refers_to"}
+{"from": "zozpp:26.1", "to": "zozpp:24", "type": "refers_to"}
+{"from": "zozpp:28", "to": "zozpp:24", "type": "refers_to"}
+{"from": "zozpp:29", "to": "zozpp:24", "type": "refers_to"}
+{"from": "zozpp:30", "to": "zozpp:28", "type": "refers_to"}
+{"from": "zozpp:30", "to": "zozpp:29", "type": "refers_to"}
+{"from": "zozpp:31", "to": "zozpp:28", "type": "refers_to"}
+{"from": "zozpp:31", "to": "zozpp:29", "type": "refers_to"}
+{"from": "zozpp:5", "to": "zozpp:18", "type": "refers_to"}
+{"from": "zozpp:5", "to": "zozpp:19", "type": "refers_to"}
+{"from": "zozpp:5", "to": "zozpp:29", "type": "refers_to"}
+{"from": "zozpp:7", "to": "zozpp:14", "type": "refers_to"}
+{"from": "zozpp:7", "to": "zozpp:5", "type": "refers_to"}

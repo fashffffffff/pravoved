@@ -65,7 +65,7 @@ def test_build_refs_only_known_articles():
         make_unit("zozpp", "18", "", "t", "см. статью 19 настоящего Закона и статью 99 настоящего Закона"),
         make_unit("zozpp", "19", "", "t", "текст"),
     ]
-    assert build_refs(units) == [("zozpp:18", "zozpp:19")]
+    assert build_refs(units) == [("zozpp:18", "zozpp:19", "refers_to")]
 
 
 def test_article_with_two_dots():
