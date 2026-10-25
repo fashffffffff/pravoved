@@ -6,8 +6,8 @@ from langchain_core.messages import HumanMessage, SystemMessage
 
 from pravoved.agent import prompts
 from pravoved.agent.tools import call_tool
-from pravoved.agent.graph import hit_key, parse_json, source_list, strip_think, usage_of
-from pravoved.agent.verify import MARKER, check_citations
+from pravoved.agent.graph import hit_key, parse_json, strip_think, usage_of
+from pravoved.agent.verify import check_citations
 from pravoved.retrieval.search import search
 
 # номер пункта: 3.2 или 3. или 3)
@@ -17,13 +17,14 @@ BOILERPLATE = re.compile(r"\bИНН\b|\bОГРН|\bБИК\b|р/с|паспорт
 MIN_CLAUSE = 25
 BATCH_CLAUSES = 5
 BATCH_CHARS = 1800
-HITS_PER_CLAUSE = 4
-MAX_HITS = 12
+HITS_PER_CLAUSE = 5
+MAX_HITS = 15
+SNIPPET = 800
 
 KINDS = {
-    "rent": ("найма жилого помещения", "наниматель", "найм жилого помещения наймодатель наниматель"),
-    "labour": ("трудовой", "работник", "трудовой договор работник работодатель"),
-    "consumer": ("с потребителем (купля-продажа или услуги)", "потребитель", "потребитель продавец исполнитель"),
+    "rent": ("найма жилого помещения", "наниматель"),
+    "labour": ("трудовой", "работник"),
+    "consumer": ("с потребителем (купля-продажа или услуги)", "потребитель"),
 }
 KIND_WORDS = {
     "rent": re.compile(r"наймодател|нанимател|найм\w* жилого|аренд", re.IGNORECASE),
@@ -99,15 +100,18 @@ def make_batches(clauses):
     return batches
 
 
-def find_hits(batch, kind):
-    hint = KINDS[kind][2]
+def find_hits(batch):
     hits, seen = [], set()
     for c in batch:
-        for h in search(hint + " " + c["text"][:400], k=HITS_PER_CLAUSE):
+        for h in search(c["text"][:400], k=HITS_PER_CLAUSE):
             if hit_key(h) not in seen:
                 seen.add(hit_key(h))
                 hits.append(h)
     return hits[:MAX_HITS]
+
+
+def source_list(hits):
+    return "\n\n".join("[%d] %s. %s\n%s" % (i, h.citation, h.title, h.text[:SNIPPET]) for i, h in enumerate(hits, 1))
 
 
 def norm_color(value):
@@ -120,7 +124,7 @@ def norm_color(value):
 
 
 async def judge_batch(llm, batch, hits, kind):
-    name, weak, _ = KINDS[kind]
+    name, weak = KINDS[kind]
     system = prompts.CONTRACT_SYSTEM.format(kind=name, weak=weak)
     clauses = "\n".join("[%s] %s" % (c["id"], c["text"]) for c in batch)
     user = prompts.CONTRACT_USER.format(sources=source_list(hits), clauses=clauses)
@@ -139,9 +143,13 @@ def finish_clause(clause, item, hits):
                 "cites": [], "invalid": 0, "downgraded": False}
     color = norm_color(item.get("color"))
     text, cited, invalid, used = check_citations(str(item.get("reason") or ""), hits)
-    cites = [{"law": hits[n - 1].law, "article": hits[n - 1].article, "citation": hits[n - 1].citation,
-              "snippet": hits[n - 1].text[:200].replace("\n", " ")} for n in used]
-    reason = MARKER.sub("", text).strip()
+    cites = []
+    for n in used:
+        h = hits[n - 1]
+        if (h.law, h.article) not in [(c["law"], c["article"]) for c in cites]:
+            cites.append({"law": h.law, "article": h.article, "citation": h.citation,
+                          "snippet": h.text[:200].replace("\n", " ")})
+    reason = re.sub(r"\s*\[[\d,;\s]+\]", "", text).replace(" .", ".").strip()
     downgraded = False
     if color == "red" and not cites:
         # красный без подтверждённой статьи не выдаём
@@ -165,7 +173,7 @@ async def check_contract(llm, text, on_progress=None):
     for i, batch in enumerate(batches, 1):
         if on_progress:
             on_progress(i, len(batches))
-        hits = find_hits(batch, kind)
+        hits = find_hits(batch)
         try:
             items, u = await judge_batch(llm, batch, hits, kind)
             usage.append(u)
