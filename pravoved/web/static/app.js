@@ -156,9 +156,8 @@ function botHtml(r, id) {
   } else {
     body = '<div class="answer">' + markdown(r.answer, sources) + "</div>";
   }
-  const tps = r.tokens_per_sec ? ", " + r.tokens_per_sec + " ток/с" : "";
-  const html = body + warningsHtml(r) + sourcesHtml(sources).replaceAll("%ID%", id) + callsHtml(r.tool_calls) + filesHtml(r.files) +
-    '<div class="footnote">' + (r.seconds || 0).toFixed(1) + " с" + tps + "</div>";
+    const html = body + warningsHtml(r) + sourcesHtml(sources).replaceAll("%ID%", id) + callsHtml(r.tool_calls) + filesHtml(r.files) +
+    '<div class="footnote">' + (r.seconds || 0).toFixed(1) + " с" + "</div>";
   return html;
 }
 
@@ -406,10 +405,6 @@ function applyTheme(t) {
 $("theme").addEventListener("click", () => applyTheme(document.documentElement.dataset.theme === "dark" ? "light" : "dark"));
 applyTheme(document.documentElement.dataset.theme);
 
-document.querySelectorAll(".palettes button").forEach((b) => b.addEventListener("click", () => {
-  document.documentElement.dataset.palette = b.dataset.palette;
-  localStorage.setItem("palette", b.dataset.palette);
-}));
 
 $("web").checked = localStorage.getItem("web") !== "off";
 $("web").addEventListener("change", () => localStorage.setItem("web", $("web").checked ? "on" : "off"));

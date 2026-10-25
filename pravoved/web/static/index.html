@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="ru" data-theme="dark" data-palette="brass">
+<html lang="ru" data-theme="dark">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -8,7 +8,7 @@
   <link rel="icon" href="logo.svg" type="image/svg+xml">
   <script>
     document.documentElement.dataset.theme = localStorage.getItem("theme") || "dark";
-    document.documentElement.dataset.palette = localStorage.getItem("palette") || "brass";
+    document.documentElement.dataset.palette = "steel";
   </script>
   <link rel="stylesheet" href="style.css">
 </head>
@@ -46,11 +46,6 @@
       <button role="tab" data-view="scan" aria-selected="false">Скан</button>
     </nav>
     <div class="tools">
-      <div class="palettes" role="group" aria-label="Цветовая схема (временно, для выбора)">
-        <button data-palette="brass" title="Латунь"></button>
-        <button data-palette="wine" title="Бордо"></button>
-        <button data-palette="steel" title="Сталь"></button>
-      </div>
       <button id="new-chat" class="tool" type="button" title="Начать новый диалог"><svg class="i"><use href="#i-plus"/></svg><span>Новый диалог</span></button>
       <button id="theme" class="tool" type="button" aria-label="Сменить тему" title="Сменить тему"><svg class="i"><use href="#i-theme"/></svg></button>
     </div>
@@ -59,7 +54,6 @@
   <main>
     <section id="view-chat" class="view">
       <div id="empty" class="empty">
-        <svg class="mark line pillar" viewBox="0 0 32 32" aria-hidden="true"><use href="#logo"/></svg>
         <h1>Что случилось?</h1>
         <p class="lead">Опишите ситуацию своими словами. Мы ответим со ссылками на статьи закона и сверим каждую ссылку с текстом.</p>
         <ul id="examples" class="examples"></ul>
