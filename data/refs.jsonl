@@ -14,6 +14,13 @@
 {"from": "gk:500", "to": "gk:488", "type": "refers_to"}
 {"from": "gk:501", "to": "gk:491", "type": "refers_to"}
 {"from": "gk:503", "to": "gk:475", "type": "refers_to"}
+{"from": "gk:572", "to": "gk:574", "type": "refers_to"}
+{"from": "gk:573", "to": "gk:574", "type": "refers_to"}
+{"from": "gk:577", "to": "gk:578", "type": "refers_to"}
+{"from": "gk:579", "to": "gk:577", "type": "refers_to"}
+{"from": "gk:579", "to": "gk:578", "type": "refers_to"}
+{"from": "gk:582", "to": "gk:578", "type": "refers_to"}
+{"from": "gk:582", "to": "gk:581", "type": "refers_to"}
 {"from": "gk:609", "to": "gk:624", "type": "refers_to"}
 {"from": "gk:621", "to": "gk:610", "type": "refers_to"}
 {"from": "gk:627", "to": "gk:621", "type": "refers_to"}
@@ -35,6 +42,12 @@
 {"from": "gk:683", "to": "gk:685", "type": "refers_to"}
 {"from": "gk:683", "to": "gk:686", "type": "refers_to"}
 {"from": "gk:683", "to": "gk:687", "type": "refers_to"}
+{"from": "gk:809", "to": "gk:810", "type": "refers_to"}
+{"from": "gk:811", "to": "gk:809", "type": "refers_to"}
+{"from": "gk:812", "to": "gk:808", "type": "refers_to"}
+{"from": "gk:813", "to": "gk:811", "type": "refers_to"}
+{"from": "gk:814", "to": "gk:811", "type": "refers_to"}
+{"from": "gk:818", "to": "gk:808", "type": "refers_to"}
 {"from": "koap:14.15", "to": "pp657:1", "type": "refers_to"}
 {"from": "koap:14.4", "to": "zozpp:4", "type": "refers_to"}
 {"from": "koap:14.7", "to": "zozpp:10", "type": "refers_to"}

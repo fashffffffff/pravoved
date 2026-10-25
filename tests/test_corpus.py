@@ -98,3 +98,14 @@ def test_citations_new_laws():
     assert citation("pp657", "25") == "Правила продажи (ПП №657), п. 25"
     assert citation("pp657", "obmen") == "Правила продажи (ПП №657), перечень товаров, не подлежащих обмену"
     assert citation("pp924", "perechen") == "Перечень технически сложных товаров (ПП №924)"
+
+
+def test_gk_gift_and_loan_articles():
+    from pathlib import Path
+    from pravoved.corpus.parse import file_units
+    text = (Path(__file__).resolve().parents[1] / "data" / "raw" / "gk.txt").read_text(encoding="utf-8")
+    arts = {u["article"] for u in file_units("gk", text)}
+    for n in ("572", "578", "582", "807", "808", "809", "810", "812", "818"):
+        assert n in arts
+    assert "819" not in arts
+    assert citation("gk", "578") == "ГК РФ, ст. 578"
