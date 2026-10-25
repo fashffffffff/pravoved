@@ -59,6 +59,16 @@ CLAIM_KINDS = {
 }
 
 
+# предоплаченный товар не доставлен в срок: другая статья и 0,5% в день
+PREPAID_BASIS = [
+    "Ст. 23.1 Закона РФ «О защите прав потребителей»: в случае нарушения продавцом установленного "
+    "срока передачи предварительно оплаченного товара потребителю продавец уплачивает неустойку "
+    "в размере половины процента суммы предварительной оплаты товара за каждый день просрочки "
+    "(п. 3 ст. 23.1).",
+    "Сумма неустойки не может превышать сумму предварительной оплаты товара.",
+]
+
+
 def ics_escape(text: str) -> str:
     text = text.replace("\\", "\\\\").replace(";", "\\;").replace(",", "\\,")
     return text.replace("\r\n", "\\n").replace("\n", "\\n")
@@ -136,6 +146,11 @@ def draft_claim_docx(kind, data, out_dir="data/out") -> dict:
         return {"error": "дата должна быть в формате ДД.ММ.ГГГГ или ГГГГ-ММ-ДД"}
 
     info = CLAIM_KINDS[kind]
+    basis = info["basis"]
+    legal_basis = info["legal_basis"]
+    if kind == "consumer_penalty" and data.get("prepaid_delivery"):
+        basis = PREPAID_BASIS
+        legal_basis = ["ЗоЗПП ст. 23.1 п. 3", "ЗоЗПП ст. 13 п. 6"]
     answer_days = data.get("answer_days") or 10
     # (текст, выравнивание, жирный)
     blocks = []
@@ -159,7 +174,7 @@ def draft_claim_docx(kind, data, out_dir="data/out") -> dict:
         blocks.append((data["calc_breakdown"], "left", False))
 
     blocks.append(("Правовые основания:", "left", True))
-    for text in info["basis"]:
+    for text in basis:
         blocks.append((text, "left", False))
 
     blocks.append(("На основании изложенного ТРЕБУЮ:", "left", True))
@@ -192,4 +207,4 @@ def draft_claim_docx(kind, data, out_dir="data/out") -> dict:
     doc.save(path)
 
     preview = "\n".join(text for text, _, _ in blocks)
-    return {"path": str(path), "preview": preview, "legal_basis": info["legal_basis"]}
+    return {"path": str(path), "preview": preview, "legal_basis": legal_basis}

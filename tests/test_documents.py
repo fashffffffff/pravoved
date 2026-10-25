@@ -81,3 +81,16 @@ def test_ics(tmp_path):
 
 def test_ics_bad_date(tmp_path):
     assert "error" in make_calendar_event("x", "завтра", out_dir=str(tmp_path))
+
+
+def test_penalty_prepaid_cites_article_23_1(tmp_path):
+    res = draft_claim_docx("consumer_penalty", {**DATA, "prepaid_delivery": True}, out_dir=str(tmp_path))
+    assert "Ст. 23.1" in res["preview"]
+    assert "половины процента" in res["preview"]
+    assert "одного процента" not in res["preview"]
+    assert "ЗоЗПП ст. 23.1 п. 3" in res["legal_basis"]
+
+
+def test_penalty_default_stays_article_23(tmp_path):
+    res = draft_claim_docx("consumer_penalty", DATA, out_dir=str(tmp_path))
+    assert "23.1" not in res["preview"]

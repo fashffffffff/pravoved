@@ -117,7 +117,7 @@ def read_page(url: str) -> dict:
 def draft_claim(kind: str, sender_name: str = "", sender_address: str = "", recipient: str = "",
                 recipient_address: str = "", facts: str = "", demand: str = "", date: str | None = None,
                 sender_phone: str = "", amount: str = "", calc_breakdown: str = "", answer_days: int = 10,
-                attachments: list[str] | None = None) -> dict:
+                attachments: list[str] | None = None, prepaid_delivery: bool = False) -> dict:
     """Составить претензию в виде файла .docx (лежит в data/out). Возвращает путь к файлу и текст претензии.
     Если каких-то обязательных полей не хватает, вернёт список missing - их нужно спросить у человека.
     kind: consumer_refund - возврат денег за товар с недостатком, consumer_penalty - неустойка за просрочку
@@ -125,11 +125,13 @@ def draft_claim(kind: str, sender_name: str = "", sender_address: str = "", reci
     Обязательные поля: sender_name (ФИО), sender_address, recipient (кому: продавец или работодатель),
     recipient_address, facts (что произошло, с датами), demand (чего требует человек), date (дата претензии,
     по умолчанию сегодня). Необязательные: sender_phone, amount (сумма), calc_breakdown (расчёт из калькулятора,
-    вставляй как есть), answer_days (срок ответа в днях), attachments (список приложений)."""
+    вставляй как есть), answer_days (срок ответа в днях), attachments (список приложений),
+    prepaid_delivery - true для consumer_penalty, если товар оплачен заранее и не доставлен (ст. 23.1, 0,5% в день)."""
     data = {"sender_name": sender_name, "sender_address": sender_address, "recipient": recipient,
             "recipient_address": recipient_address, "facts": facts, "demand": demand,
             "date": date or today_str(), "sender_phone": sender_phone, "amount": amount,
-            "calc_breakdown": calc_breakdown, "answer_days": answer_days, "attachments": attachments or []}
+            "calc_breakdown": calc_breakdown, "answer_days": answer_days, "attachments": attachments or [],
+            "prepaid_delivery": prepaid_delivery}
     return documents.draft_claim_docx(kind, data, str(OUT_DIR))
 
 

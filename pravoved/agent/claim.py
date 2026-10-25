@@ -99,7 +99,8 @@ class ClaimSession:
         args = {"kind": f["kind"], "sender_name": f["sender_name"], "sender_address": f["sender_address"],
                 "sender_phone": f.get("sender_phone") or "", "recipient": f["recipient"],
                 "recipient_address": f["recipient_address"], "facts": f["facts"], "demand": f["demand"],
-                "amount": sum_text, "calc_breakdown": breakdown, "answer_days": ANSWER_DAYS}
+                "amount": sum_text, "calc_breakdown": breakdown, "answer_days": ANSWER_DAYS,
+                "prepaid_delivery": f.get("prepaid_delivery") is True}
         res = await call_tool(self.tools, "draft_claim", args)
         if res.get("missing"):
             # инструмент не принял поля: спрашиваем ровно их

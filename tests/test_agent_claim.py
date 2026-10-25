@@ -65,3 +65,24 @@ def test_session_cancel():
     s = ClaimSession(FakeLlm([]), [])
     run(s.step("отмена"))
     assert s.done
+
+
+def test_draft_passes_prepaid_flag(monkeypatch):
+    sent = {}
+
+    async def fake_call(tools, name, args):
+        sent[name] = args
+        if name == "draft_claim":
+            return {"path": "x.docx", "preview": "текст"}
+        if name == "calc_deadline":
+            return {"deadline": "2026-11-04"}
+        return {"penalty": "100.00"}
+
+    monkeypatch.setattr("pravoved.agent.claim.call_tool", fake_call)
+    s = ClaimSession(FakeLlm([]), [])
+    s.fields = {"kind": "consumer_penalty", "prepaid_delivery": True, "price": 1000, "due_date": "2026-10-01",
+                "sender_name": "а", "sender_address": "б", "recipient": "в", "recipient_address": "г",
+                "facts": "д", "demand": "е"}
+    run(s.draft())
+    assert sent["draft_claim"]["prepaid_delivery"] is True
+    assert sent["calc_consumer_penalty"]["kind"] == "prepaid_delivery"
