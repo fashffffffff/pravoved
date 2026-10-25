@@ -106,8 +106,8 @@ function el(html) {
 }
 
 function trustLabel(t, i) {
-  const mark = t === "draft" || t === "unverified" ? icon("warn") : '<svg class="i" style="--i:' + (i || 0) + '"><use href="#i-check"/></svg>';
-  return '<span class="tag-trust t-' + esc(t) + '">' + mark + esc(TRUST[t] || t) + "</span>";
+  const mark = t === "draft" || t === "unverified" ? icon("warn") : '<svg class="i" style="--i:' + (i || 0) + '"><use href="#seal"/></svg>';
+  return '<span class="trust t-' + esc(t) + '">' + mark + esc(TRUST[t] || t) + "</span>";
 }
 
 function sourcesHtml(sources) {
@@ -152,7 +152,7 @@ function botHtml(r, id) {
   const sources = r.sources || [];
   let body;
   if (r.refused) {
-    body = '<div class="refusal"><div class="label">Агент воздержался от ответа</div><div class="answer">' + markdown(r.answer, sources) + "</div></div>";
+    body = '<div class="refusal"><div class="label"><svg class="mark" viewBox="0 0 32 32"><use href="#logo"/></svg>Агент воздержался от ответа</div><div class="answer">' + markdown(r.answer, sources) + "</div></div>";
   } else {
     body = '<div class="answer">' + markdown(r.answer, sources) + "</div>";
   }
@@ -181,24 +181,10 @@ function addBot(r, id) {
   return div;
 }
 
-function renderRecent() {
-  const asked = history.map((m, i) => [m, i]).filter(([m]) => m.role === "user");
-  $("recent").innerHTML = asked.map(([m, i]) => '<li><button type="button" data-i="' + i + '">' + esc(m.text) + "</button></li>").join("");
-  $("recent-empty").hidden = asked.length > 0;
-}
-
-$("recent").addEventListener("click", (e) => {
-  const b = e.target.closest("button");
-  const target = b && document.getElementById("u-" + b.dataset.i);
-  if (target) target.scrollIntoView({ behavior: "smooth", block: "start" });
-  $("rail").classList.remove("open");
-});
-
 function render() {
   log.innerHTML = "";
   history.forEach((m, i) => (m.role === "user" ? addUser(m.text, i) : addBot(m.result, i)));
   showEmpty(history.length === 0);
-  renderRecent();
 }
 
 function save() {
@@ -236,26 +222,26 @@ function makeProgress(first) {
   const box = el('<div class="msg-bot"><div class="progress"></div></div>');
   const list = box.firstChild;
   const started = Date.now();
-  const clock = el('<div class="clock"></div>');
-  const tick = () => { clock.textContent = ((Date.now() - started) / 1000).toFixed(0) + " с"; };
-  tick();
-  const timer = setInterval(tick, 1000);
+  const stamp = () => {
+    const sec = Math.floor((Date.now() - started) / 1000);
+    return String(Math.floor(sec / 60)).padStart(2, "0") + ":" + String(sec % 60).padStart(2, "0");
+  };
   let live = null;
   const api = {
     box,
     step(label) {
       if (live) live.classList.replace("live", "done");
-      live = el('<div class="step live"><span class="mark">' + icon("check") + "</span><span>" + esc(label) + '</span><span class="detail"></span></div>');
-      clock.remove();
-      list.append(live, clock);
+      live = el('<div class="step live"><span class="time">' + stamp() + '</span><span class="mark-s">' + icon("check") +
+        "</span><span><span class=\"lbl\">" + esc(label) + '</span><span class="detail"></span></span></div>');
+      list.append(live);
     },
     label(text) {
-      if (live) live.children[1].textContent = text;
+      if (live) live.querySelector(".lbl").textContent = text;
     },
     detail(detail) {
       if (live && detail) live.querySelector(".detail").textContent = detail;
     },
-    stop() { clearInterval(timer); box.remove(); },
+    stop() { box.remove(); },
   };
   if (first) api.step(first);
   log.appendChild(box);
@@ -283,7 +269,6 @@ async function send(question) {
   history.push({ role: "user", text: question });
   showEmpty(false);
   addUser(question, history.length - 1);
-  renderRecent();
   input.value = "";
   autosize();
 
@@ -307,10 +292,10 @@ async function send(question) {
       } else if (ev === "progress") {
         pr.step("Проверяю договор, часть " + data.done + " из " + data.total);
       } else if (ev === "result") result = data;
-      else if (ev === "error") error = data.message;
+      else if (ev === "error") error = data;
     });
   } catch (e) {
-    error = e.message;
+    error = { title: "Нет связи с сервером", hint: "Проверьте, что Правовед запущен на этом компьютере, и повторите.", detail: e.message };
   }
   pr.stop();
   if (result) {
@@ -318,14 +303,27 @@ async function send(question) {
     const div = addBot(result, history.length - 1);
     div.scrollIntoView({ behavior: "smooth", block: "start" });
   } else {
-    log.appendChild(el('<div class="msg-bot"><div class="err">Не получилось ответить: ' + esc(error || "нет ответа от сервера") +
-      ". Проверьте, что модель запущена, и повторите вопрос.</div></div>"));
+    const box = el('<div class="msg-bot">' + errorHtml(error) + "</div>");
+    box.querySelector("button").addEventListener("click", () => { box.remove(); send(question); });
+    log.appendChild(box);
     history.pop();
   }
   save();
   busy = false;
   $("send").disabled = false;
   input.focus();
+}
+
+function errorHtml(err) {
+  err = err || { title: "Ответ не пришёл", hint: "Повторите вопрос через минуту." };
+  return '<div class="err"><p><strong>' + esc(err.title) + '</strong></p><p class="why">' + esc(err.hint || "") + "</p>" +
+    '<button class="btn quiet" type="button">Повторить вопрос</button>' +
+    (err.detail ? '<details><summary>Технические подробности</summary><pre>' + esc(err.detail) + "</pre></details>" : "") + "</div>";
+}
+
+function plainError(err) {
+  return '<div class="err"><p><strong>' + esc(err.title || err.message) + '</strong></p><p class="why">' + esc(err.hint || "") + "</p>" +
+    (err.detail ? '<details><summary>Технические подробности</summary><pre>' + esc(err.detail) + "</pre></details>" : "") + "</div>";
 }
 
 function scrollDown() {
@@ -386,7 +384,7 @@ input.addEventListener("keydown", (e) => {
 $("form").addEventListener("submit", (e) => { e.preventDefault(); send(input.value); });
 
 $("examples").innerHTML = EXAMPLES.map(([q, tag], i) =>
-  '<li><button type="button" data-i="' + i + '"><span class="q">' + esc(q) + '</span><span class="tag">' + esc(tag) + "</span></button></li>").join("");
+  '<li><button type="button" data-i="' + i + '"><span class="q">' + esc(q) + '</span><span class="tag">' + esc(tag) + icon("send") + "</span></button></li>").join("");
 $("examples").addEventListener("click", (e) => {
   const b = e.target.closest("button");
   if (b) send(EXAMPLES[b.dataset.i][0]);
@@ -408,6 +406,11 @@ function applyTheme(t) {
 $("theme").addEventListener("click", () => applyTheme(document.documentElement.dataset.theme === "dark" ? "light" : "dark"));
 applyTheme(document.documentElement.dataset.theme);
 
+document.querySelectorAll(".palettes button").forEach((b) => b.addEventListener("click", () => {
+  document.documentElement.dataset.palette = b.dataset.palette;
+  localStorage.setItem("palette", b.dataset.palette);
+}));
+
 $("web").checked = localStorage.getItem("web") !== "off";
 $("web").addEventListener("change", () => localStorage.setItem("web", $("web").checked ? "on" : "off"));
 
@@ -416,14 +419,8 @@ document.querySelectorAll(".nav button").forEach((b) => b.addEventListener("clic
   document.querySelectorAll(".nav button").forEach((x) => x.setAttribute("aria-selected", String(x === b)));
   for (const v of ["chat", "contract", "scan"]) $("view-" + v).hidden = v !== b.dataset.view;
   $("dock").hidden = b.dataset.view !== "chat";
-  $("rail").classList.remove("open");
   window.scrollTo(0, 0);
 }));
-
-$("menu").addEventListener("click", () => {
-  const open = $("rail").classList.toggle("open");
-  $("menu").setAttribute("aria-expanded", String(open));
-});
 
 /* файлы */
 function dropzone(id, fileId, handler) {
@@ -455,10 +452,11 @@ function citeLine(c) {
 }
 
 function clauseHtml(c) {
-  return '<div class="clause ' + esc(c.color) + '"><div class="head"><b>' + esc(COLOR_NAME[c.color] || c.color) + "</b><span>п. " + esc(c.id) +
+  const ico = { red: "no", yellow: "warn", green: "seal" }[c.color] || "seal";
+  return '<div class="clause ' + esc(c.color) + '"><svg class="i"><use href="#' + (ico === "seal" ? "seal" : "i-" + ico) + '"/></svg><div><div class="head"><b>' + esc(COLOR_NAME[c.color] || c.color) + "</b><span>п. " + esc(c.id) +
     "</span>" + (c.section ? "<span>" + esc(c.section) + "</span>" : "") + '</div><div class="text">' + esc(c.text) + "</div>" +
     (c.reason ? '<div class="why">' + esc(c.reason) + "</div>" : "") +
-    (c.cites && c.cites.length ? '<ul class="cites">' + c.cites.map(citeLine).join("") + "</ul>" : "") + "</div>";
+    (c.cites && c.cites.length ? '<ul class="cites">' + c.cites.map(citeLine).join("") + "</ul>" : "") + "</div></div>";
 }
 
 function contractHtml(r) {
@@ -475,7 +473,7 @@ function contractHtml(r) {
     (risks ? '<div><h3 class="block-title">Главные риски</h3><ul class="risks">' + risks + "</ul></div>" : "") +
     (r.invalid ? '<div class="warn red">' + icon('warn') + "<div>Неверных ссылок на статьи: " + r.invalid + ".</div></div>" : "") + "</div>" +
     '<div class="clauses">' + flagged.map(clauseHtml).join("") + "</div>" +
-    (rest.length ? '<details class="calc fold"><summary>' + icon("check") + 'Пункты в порядке (' + rest.length + ')</summary><div class="clauses" style="padding:12px">' +
+    (rest.length ? '<details class="calc fold"><summary>' + icon("check") + 'Пункты в порядке (' + rest.length + ')</summary><div class="clauses">' +
       rest.map(clauseHtml).join("") + "</div></details>" : "") +
     '<div class="footnote">' + (r.seconds || 0).toFixed(1) + " с</div>";
 }
@@ -488,11 +486,11 @@ dropzone("contract-drop", "contract-file", async (file) => {
     await stream("/api/contract", upload(file), (ev, data) => {
       if (ev === "progress") $("cp").textContent = "Проверяю пункты, часть " + data.done + " из " + data.total;
       else if (ev === "result") { out.innerHTML = contractHtml(data); done = true; }
-      else if (ev === "error") { out.innerHTML = '<div class="err">' + esc(data.message) + "</div>"; done = true; }
+      else if (ev === "error") { out.innerHTML = plainError(data); done = true; }
     });
     if (!done) out.innerHTML = '<div class="err">Сервер не вернул результат.</div>';
   } catch (e) {
-    out.innerHTML = '<div class="err">' + esc(e.message) + "</div>";
+    out.innerHTML = plainError({ title: "Нет связи с сервером", hint: "Проверьте, что Правовед запущен, и загрузите файл ещё раз.", detail: e.message });
   }
 });
 
@@ -502,12 +500,12 @@ dropzone("scan-drop", "scan-file", async (file) => {
   try {
     const resp = await fetch("/api/scan", upload(file));
     const data = await resp.json();
-    if (!resp.ok) throw new Error(data.error || data.detail || "ошибка " + resp.status);
+    if (!resp.ok) throw data.title ? data : new Error(data.error || data.detail || "ошибка " + resp.status);
     out.innerHTML = '<div class="scan-text"></div><div class="block files"><button class="btn quiet" type="button" id="copy">' + icon("copy") + 'Скопировать текст</button></div>';
     out.firstChild.textContent = data.text || "Текст не найден.";
     $("copy").addEventListener("click", () => navigator.clipboard.writeText(data.text));
   } catch (e) {
-    out.innerHTML = '<div class="err">' + esc(e.message) + "</div>";
+    out.innerHTML = plainError(e.title ? e : { title: "Не получилось распознать файл", hint: e.message });
   }
 });
 

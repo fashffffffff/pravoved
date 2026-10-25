@@ -1,116 +1,119 @@
 <!doctype html>
-<html lang="ru" data-theme="dark">
+<html lang="ru" data-theme="dark" data-palette="brass">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Правовед</title>
   <meta name="color-scheme" content="dark light">
   <link rel="icon" href="logo.svg" type="image/svg+xml">
-  <script>document.documentElement.dataset.theme = localStorage.getItem("theme") || "dark";</script>
+  <script>
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "dark";
+    document.documentElement.dataset.palette = localStorage.getItem("palette") || "brass";
+  </script>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <svg width="0" height="0" style="position:absolute" aria-hidden="true">
-    <symbol id="i-ask" viewBox="0 0 24 24"><path d="M4 4h16v12h-9l-5 4v-4H4z"/></symbol>
-    <symbol id="i-contract" viewBox="0 0 24 24"><path d="M6 3h9l4 4v14H6z M15 3v4h4 M9 12h7 M9 16h7"/></symbol>
-    <symbol id="i-scan" viewBox="0 0 24 24"><path d="M4 8V4h4 M16 4h4v4 M20 16v4h-4 M8 20H4v-4 M4 12h16"/></symbol>
-    <symbol id="i-warn" viewBox="0 0 24 24"><path d="M12 3l10 18H2z M12 10v5 M12 18v.5"/></symbol>
+    <symbol id="logo" viewBox="0 0 32 32">
+      <path d="M6 5h20v3H6z"/>
+      <path d="M9 8h14l-2 3.5H11z"/>
+      <path fill-rule="evenodd" d="M11 12h10v13H11z M13.2 13.5h1.2v10h-1.2z M15.4 13.5h1.2v10h-1.2z M17.6 13.5h1.2v10h-1.2z"/>
+      <path d="M9 25h14v2H9z"/>
+      <path d="M7 27h18v2.5H7z"/>
+    </symbol>
+    <symbol id="i-warn" viewBox="0 0 24 24"><path d="M12 3.5l9.5 16.5h-19z M12 10v5 M12 17.5v.5"/></symbol>
     <symbol id="i-theme" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M12 4a8 8 0 0 1 0 16z" fill="currentColor"/></symbol>
-    <symbol id="i-down" viewBox="0 0 24 24"><path d="M12 4v12 M6 11l6 6 6-6 M5 20h14"/></symbol>
+    <symbol id="i-down" viewBox="0 0 24 24"><path d="M12 4v11 M7 11l5 5 5-5 M5 20h14"/></symbol>
     <symbol id="i-calc" viewBox="0 0 24 24"><path d="M5 3h14v18H5z M8 7h8 M8 12h2 M14 12h2 M8 16h2 M14 16h2"/></symbol>
     <symbol id="i-copy" viewBox="0 0 24 24"><path d="M8 8h12v12H8z M4 4h12v4 M4 4v12h4"/></symbol>
-    <symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 7h16 M4 12h16 M4 17h16"/></symbol>
-    <symbol id="i-check" viewBox="0 0 24 24"><path class="draw" d="M5 12.5l5 5 9-10"/></symbol>
-    <symbol id="i-clear" viewBox="0 0 24 24"><path d="M5 7h14 M9 7V4h6v3 M7 7l1 13h8l1-13"/></symbol>
-    <symbol id="i-send" viewBox="0 0 24 24"><path d="M4 12h15 M13 6l6 6-6 6"/></symbol>
-    <symbol id="i-link" viewBox="0 0 24 24"><path d="M14 4h6v6 M20 4l-9 9 M18 14v6H4V6h6"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12.5l5 5 9-10"/></symbol>
+    <symbol id="i-no" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M8.5 8.5l7 7 M15.5 8.5l-7 7"/></symbol>
+    <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14 M5 12h14"/></symbol>
+    <symbol id="i-send" viewBox="0 0 24 24"><path d="M5 12h13 M13 6.5l5.5 5.5-5.5 5.5"/></symbol>
+    <symbol id="i-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M3.5 12h17 M12 3.5c3 3 3 14 0 17 M12 3.5c-3 3-3 14 0 17"/></symbol>
+    <symbol id="i-upload" viewBox="0 0 24 24"><path d="M12 16V5 M7 9.5l5-5 5 5 M5 20h14"/></symbol>
+    <symbol id="seal" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path class="draw" d="M7.8 12.4l3 3 5.6-6.6"/></symbol>
   </svg>
 
-  <div class="shell">
-    <aside class="rail" id="rail">
-      <div class="rail-bar">
-        <a class="brand" href="/" aria-label="Правовед">
-          <img src="logo.svg" alt="" width="34" height="34">
-          <span>Правовед</span>
-        </a>
-        <nav class="nav" role="tablist" aria-label="Разделы">
-          <button role="tab" data-view="chat" aria-selected="true"><svg class="i"><use href="#i-ask"/></svg><span>Вопрос</span></button>
-          <button role="tab" data-view="contract" aria-selected="false"><svg class="i"><use href="#i-contract"/></svg><span>Договор</span></button>
-          <button role="tab" data-view="scan" aria-selected="false"><svg class="i"><use href="#i-scan"/></svg><span>Скан</span></button>
-        </nav>
-        <button id="menu" class="icon" type="button" aria-label="Настройки" aria-expanded="false"><svg class="i"><use href="#i-menu"/></svg></button>
+  <header class="top">
+    <a class="brand" href="/" aria-label="Правовед">
+      <svg class="mark" width="30" height="30"><use href="#logo"/></svg>
+      <span>Правовед</span>
+    </a>
+    <nav class="nav" role="tablist" aria-label="Разделы">
+      <button role="tab" data-view="chat" aria-selected="true">Вопрос</button>
+      <button role="tab" data-view="contract" aria-selected="false">Договор</button>
+      <button role="tab" data-view="scan" aria-selected="false">Скан</button>
+    </nav>
+    <div class="tools">
+      <div class="palettes" role="group" aria-label="Цветовая схема (временно, для выбора)">
+        <button data-palette="brass" title="Латунь"></button>
+        <button data-palette="wine" title="Бордо"></button>
+        <button data-palette="steel" title="Сталь"></button>
       </div>
-
-      <div class="rail-more">
-        <div class="recent">
-          <h2>Вопросы в этом диалоге</h2>
-          <ol id="recent"></ol>
-          <p id="recent-empty" class="muted">Пока пусто</p>
-        </div>
-        <div class="settings">
-          <label class="switch"><input id="web" type="checkbox" checked><span class="track"></span><span>Поиск в интернете</span></label>
-          <div class="row">
-            <button id="theme" class="link" type="button"><svg class="i"><use href="#i-theme"/></svg><span>Сменить тему</span></button>
-            <button id="new-chat" class="link" type="button"><svg class="i"><use href="#i-clear"/></svg><span>Очистить</span></button>
-          </div>
-          <p class="muted meta"><span id="corpus"></span><br><span id="model"></span></p>
-        </div>
-      </div>
-    </aside>
-
-    <div class="stage">
-      <main>
-        <section id="view-chat" class="view">
-          <div id="empty" class="empty">
-            <img class="hero-mark" src="logo.svg" alt="" width="84" height="84">
-            <h1>Что случилось?</h1>
-            <p class="lead">Опишите ситуацию своими словами. Ответ придёт со ссылками на статьи закона, и каждую ссылку мы сверяем с текстом.</p>
-            <ul id="examples" class="examples"></ul>
-            <p class="disclaimer">Правовед даёт справочную информацию и не заменяет консультацию юриста. Мы не несём ответственности за решения и последствия, которые вы свяжете с этими ответами. В важных случаях обращайтесь к специалисту.</p>
-          </div>
-          <div id="log" class="log" aria-live="polite"></div>
-        </section>
-
-        <section id="view-contract" class="view" hidden>
-          <header class="doc-head">
-            <h1>Проверка договора</h1>
-            <p>Каждый пункт получит оценку и ссылку на норму закона.</p>
-          </header>
-          <div id="contract-stub" class="note" hidden>Проверка договоров ещё не подключена к серверу.</div>
-          <label id="contract-drop" class="drop">
-            <input id="contract-file" type="file" accept=".txt,.docx,.pdf,.jpg,.jpeg,.png">
-            <svg class="i big"><use href="#i-contract"/></svg>
-            <strong>Выберите файл или перетащите сюда</strong>
-            <span>txt, docx, pdf, jpg, png, до 20 МБ</span>
-          </label>
-          <div id="contract-out"></div>
-        </section>
-
-        <section id="view-scan" class="view" hidden>
-          <header class="doc-head">
-            <h1>Распознать скан</h1>
-            <p>Фото или скан документа станет текстом, который можно скопировать.</p>
-          </header>
-          <div id="scan-stub" class="note" hidden>Распознавание сканов ещё не подключено к серверу.</div>
-          <label id="scan-drop" class="drop">
-            <input id="scan-file" type="file" accept=".jpg,.jpeg,.png,.pdf">
-            <svg class="i big"><use href="#i-scan"/></svg>
-            <strong>Выберите файл или перетащите сюда</strong>
-            <span>jpg, png, pdf, до 20 МБ</span>
-          </label>
-          <div id="scan-out"></div>
-        </section>
-      </main>
-
-      <footer class="dock" id="dock">
-        <form id="form" class="composer">
-          <textarea id="input" rows="1" placeholder="Опишите ситуацию" aria-label="Вопрос"></textarea>
-          <button id="send" class="btn" type="submit"><span>Спросить</span><svg class="i"><use href="#i-send"/></svg></button>
-        </form>
-        <p class="legal">Справочная информация, а не юридическая консультация. Ответственности за последствия мы не несём.</p>
-      </footer>
+      <button id="new-chat" class="tool" type="button" title="Начать новый диалог"><svg class="i"><use href="#i-plus"/></svg><span>Новый диалог</span></button>
+      <button id="theme" class="tool" type="button" aria-label="Сменить тему" title="Сменить тему"><svg class="i"><use href="#i-theme"/></svg></button>
     </div>
-  </div>
+  </header>
+
+  <main>
+    <section id="view-chat" class="view">
+      <div id="empty" class="empty">
+        <svg class="mark line pillar" viewBox="0 0 32 32" aria-hidden="true"><use href="#logo"/></svg>
+        <h1>Что случилось?</h1>
+        <p class="lead">Опишите ситуацию своими словами. Мы ответим со ссылками на статьи закона и сверим каждую ссылку с текстом.</p>
+        <ul id="examples" class="examples"></ul>
+        <p class="disclaimer">Правовед даёт справочную информацию и не заменяет консультацию юриста. Мы не несём ответственности за решения и последствия, которые вы свяжете с этими ответами. В важных случаях обращайтесь к специалисту.</p>
+      </div>
+      <div id="log" class="log" aria-live="polite"></div>
+    </section>
+
+    <section id="view-contract" class="view" hidden>
+      <header class="doc-head">
+        <h1>Проверка договора</h1>
+        <p>Каждый пункт получит оценку и ссылку на норму закона.</p>
+      </header>
+      <div id="contract-stub" class="note" hidden>Проверка договоров ещё не подключена к серверу.</div>
+      <label id="contract-drop" class="drop">
+        <input id="contract-file" type="file" accept=".txt,.docx,.pdf,.jpg,.jpeg,.png">
+        <svg class="i big"><use href="#i-upload"/></svg>
+        <strong>Выберите файл или перетащите сюда</strong>
+        <span>txt, docx, pdf, jpg, png, до 20 МБ</span>
+      </label>
+      <div id="contract-out"></div>
+    </section>
+
+    <section id="view-scan" class="view" hidden>
+      <header class="doc-head">
+        <h1>Распознать скан</h1>
+        <p>Фото или скан документа станет текстом, который можно скопировать.</p>
+      </header>
+      <div id="scan-stub" class="note" hidden>Распознавание сканов ещё не подключено к серверу.</div>
+      <label id="scan-drop" class="drop">
+        <input id="scan-file" type="file" accept=".jpg,.jpeg,.png,.pdf">
+        <svg class="i big"><use href="#i-upload"/></svg>
+        <strong>Выберите файл или перетащите сюда</strong>
+        <span>jpg, png, pdf, до 20 МБ</span>
+      </label>
+      <div id="scan-out"></div>
+    </section>
+  </main>
+
+  <footer class="dock" id="dock">
+    <form id="form" class="composer">
+      <textarea id="input" rows="1" placeholder="Опишите ситуацию" aria-label="Вопрос"></textarea>
+      <div class="composer-row">
+        <label class="chip" title="Если в базе законов не нашлось ответа, агент поищет на сайтах госорганов">
+          <input id="web" type="checkbox" checked>
+          <svg class="i"><use href="#i-globe"/></svg>
+          <span>Искать в интернете</span>
+        </label>
+        <button id="send" class="btn" type="submit"><span>Спросить</span><svg class="i"><use href="#i-send"/></svg></button>
+      </div>
+    </form>
+    <p class="legal">Справочная информация, а не юридическая консультация. Ответственности за последствия мы не несём.
+      <span class="sep"></span><span id="corpus"></span><span id="model"></span></p>
+  </footer>
 
   <div id="pop" class="pop" role="tooltip" hidden></div>
   <script src="app.js"></script>

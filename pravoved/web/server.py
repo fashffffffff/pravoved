@@ -1,5 +1,6 @@
 import asyncio
 import json
+import logging
 import os
 from contextlib import asynccontextmanager
 from pathlib import Path
@@ -19,6 +20,7 @@ OUT_DIR = (ROOT / "data" / "out").resolve()
 MAX_UPLOAD = 20 * 1024 * 1024
 FILE_EXTS = (".docx", ".ics")
 
+log = logging.getLogger("uvicorn.error")
 state = {}
 chats = {}
 MAX_CHATS = 50
@@ -39,6 +41,21 @@ class Question(BaseModel):
     question: str
     web: bool = True
     chat_id: str = ""
+
+
+def friendly(e):
+    """Понятное пользователю описание ошибки. Полный текст остаётся в подробностях и в логе сервера"""
+    text = "%s: %s" % (e.__class__.__name__, e)
+    low = text.lower()
+    if "connect" in low and ("8081" in low or "openai" in low or "connection error" in low or "refused" in low):
+        title, hint = "Модель не отвечает", "Языковая модель недоступна. Проверьте, что она запущена, и повторите вопрос."
+    elif "timeout" in low or "timed out" in low:
+        title, hint = "Модель отвечает слишком долго", "Возможно, она занята другим запросом. Подождите минуту и повторите."
+    elif "qdrant" in low or "collection" in low or "vectorparams" in low:
+        title, hint = "База законов недоступна", "Не удалось открыть поисковый индекс. Это сбой сервера, а не ваш вопрос: перезапустите Правовед или сообщите разработчикам."
+    else:
+        title, hint = "Не получилось ответить", "Это сбой на нашей стороне, ваш вопрос тут ни при чём. Повторите; если ошибка останется, перезапустите сервер."
+    return {"title": title, "hint": hint, "detail": text[:600]}
 
 
 def sse(event, data):
@@ -121,7 +138,8 @@ async def stream_task(make_coro):
             res = await make_coro(emit)
             emit("result", res)
         except Exception as e:
-            emit("error", {"message": str(e) or e.__class__.__name__})
+            log.exception("ошибка при обработке запроса")
+            emit("error", friendly(e))
         emit("done", {})
 
     task = asyncio.create_task(worker())
@@ -211,7 +229,10 @@ async def scan(file: UploadFile = File(...)):
     try:
         text = await agent_run.read_scan(file.filename or "scan.jpg", data)
     except ValueError as e:
-        return JSONResponse({"error": str(e)}, status_code=422)
+        return JSONResponse({"title": "Не получилось распознать файл", "hint": str(e)}, status_code=422)
+    except Exception as e:
+        log.exception("ошибка распознавания")
+        return JSONResponse(friendly(e), status_code=500)
     return {"text": text}
 
 
