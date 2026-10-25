@@ -28,6 +28,13 @@ const input = $("input");
 const pop = $("pop");
 let history = JSON.parse(localStorage.getItem("history") || "[]");
 let busy = false;
+let chatId = localStorage.getItem("chatId") || newChatId();
+
+function newChatId() {
+  const id = Math.random().toString(36).slice(2) + Date.now().toString(36);
+  localStorage.setItem("chatId", id);
+  return id;
+}
 let info = {};
 
 function esc(s) {
@@ -140,6 +147,8 @@ function filesHtml(files) {
 }
 
 function botHtml(r, id) {
+  if (r.kind === "claim") return '<div class="answer">' + markdown(r.text, []) + "</div>" + filesHtml(r.files);
+  if (r.kind === "contract") return contractHtml(r.result);
   const sources = r.sources || [];
   let body;
   if (r.refused) {
@@ -240,6 +249,9 @@ function makeProgress(first) {
       clock.remove();
       list.append(live, clock);
     },
+    label(text) {
+      if (live) live.children[1].textContent = text;
+    },
     detail(detail) {
       if (live && detail) live.querySelector(".detail").textContent = detail;
     },
@@ -275,7 +287,7 @@ async function send(question) {
   input.value = "";
   autosize();
 
-  const pr = makeProgress(STEPS.retrieve);
+  const pr = makeProgress("Разбираю запрос");
   scrollDown();
   let result = null;
   let error = null;
@@ -283,14 +295,17 @@ async function send(question) {
     await stream("/api/ask", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ question, web: $("web").checked }),
+      body: JSON.stringify({ question, web: $("web").checked, chat_id: chatId }),
     }, (ev, data) => {
       if (ev === "step") {
         // шаг пришёл, когда узел уже закончился: показываем итог, потом следующий
+        if (data.node === "retrieve") pr.label(STEPS.retrieve);
         pr.detail(data.detail);
         const next = nextStep(data);
         if (next) pr.step(STEPS[next]);
         scrollDown();
+      } else if (ev === "progress") {
+        pr.step("Проверяю договор, часть " + data.done + " из " + data.total);
       } else if (ev === "result") result = data;
       else if (ev === "error") error = data.message;
     });
@@ -380,6 +395,7 @@ $("examples").addEventListener("click", (e) => {
 $("new-chat").addEventListener("click", () => {
   if (busy) return;
   history = [];
+  chatId = newChatId();
   save();
   render();
 });
@@ -434,7 +450,8 @@ const COLOR_NAME = { red: "Рискованно", yellow: "Осторожно", 
 function citeLine(c) {
   const text = typeof c === "string" ? c : c.citation || "";
   const url = c && c.url;
-  return "<li>" + (url ? '<a href="' + esc(url) + '" target="_blank" rel="noopener noreferrer">' + esc(text) + "</a>" : esc(text)) + "</li>";
+  return "<li>" + (url ? '<a href="' + esc(url) + '" target="_blank" rel="noopener noreferrer">' + esc(text) + "</a>" : esc(text)) +
+    (c && c.snippet ? '<div class="snip">' + esc(c.snippet) + "</div>" : "") + "</li>";
 }
 
 function clauseHtml(c) {

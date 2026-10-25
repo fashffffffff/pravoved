@@ -10,6 +10,7 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
 from pravoved.agent import run as agent_run
+from pravoved.agent.chat import Chat
 from pravoved.corpus.meta import corpus_date
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -19,6 +20,8 @@ MAX_UPLOAD = 20 * 1024 * 1024
 FILE_EXTS = (".docx", ".ics")
 
 state = {}
+chats = {}
+MAX_CHATS = 50
 
 
 @asynccontextmanager
@@ -35,6 +38,7 @@ app = FastAPI(title="Правовед", lifespan=lifespan)
 class Question(BaseModel):
     question: str
     web: bool = True
+    chat_id: str = ""
 
 
 def sse(event, data):
@@ -59,6 +63,33 @@ def describe_step(node, update):
     if node == "verify":
         return "ссылок проверено: %s, неверных: %s" % (update.get("cited", 0), update.get("invalid", 0))
     return ""
+
+
+def get_chat(chat_id):
+    """Один Chat на вкладку браузера: в нём живёт диалог про претензию"""
+    if chat_id not in chats:
+        if len(chats) >= MAX_CHATS:
+            chats.pop(next(iter(chats)))
+        chats[chat_id] = Chat(state["graph"])
+    return chats[chat_id]
+
+
+def shape_reply(res):
+    """Приводит ответ Chat.turn к тому, что ждёт фронт"""
+    kind = res["kind"]
+    if kind == "answer":
+        res["files"] = result_files(res)
+    elif kind in ("claim", "text"):
+        path = res.get("path")
+        name = Path(path).name if path else ""
+        text = res["text"]
+        if path:
+            text = text.replace(str(path), name)
+        if kind == "text":
+            text = "Загрузите договор на вкладке «Договор» или вставьте его текст сюда целиком."
+        files = [{"name": name, "url": "/api/files/" + name}] if name and (OUT_DIR / name).is_file() else []
+        return {"kind": "claim", "text": text, "files": files}
+    return res
 
 
 def result_files(res):
@@ -136,9 +167,12 @@ async def ask(q: Question):
             def on_step(node, update):
                 emit("step", {"node": node, "detail": describe_step(node, update)})
 
-            res = await agent_run.ask(state["graph"], question, on_step)
-        res["files"] = result_files(res)
-        return res
+            def on_progress(done, total):
+                emit("progress", {"done": done, "total": total})
+
+            chat = get_chat(q.chat_id)
+            res = await chat.turn(question, on_step, on_progress)
+        return shape_reply(res)
 
     return sse_response(stream_task(job))
 

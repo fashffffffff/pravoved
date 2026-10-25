@@ -314,6 +314,7 @@ details.calc summary:hover { background: var(--accent-soft); }
 .clause .why { margin-top: 10px; font-size: 15px; }
 .clause .cites { margin: 8px 0 0; padding: 0; list-style: none; font-size: 13.5px; color: var(--muted); }
 .clause .cites a { color: var(--accent); }
+.clause .snip { margin-top: 4px; padding-left: 10px; border-left: 2px solid var(--line); display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
 .fold { margin-top: 16px; }
 .fold .clauses { padding: 12px; }
 .scan-text { white-space: pre-wrap; background: var(--panel); border: 1.5px solid var(--ink); border-radius: var(--r); padding: 18px; line-height: 1.65; overflow-wrap: anywhere; margin-bottom: 18px; }
