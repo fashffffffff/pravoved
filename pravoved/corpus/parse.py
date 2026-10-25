@@ -4,6 +4,8 @@ import json
 import re
 from pathlib import Path
 
+from pravoved.corpus.sections import section_of
+
 ROOT = Path(__file__).resolve().parents[2]
 RAW = ROOT / "data" / "raw"
 CHUNKS = ROOT / "data" / "chunks.jsonl"
@@ -184,7 +186,9 @@ def file_units(code, text):
 
 def make_unit(law, article, part, title, text):
     uid = law + ":" + article + (":" + part if part else "")
-    return {"id": uid, "law": law, "article": article, "part": part, "title": title, "text": text}
+    section, regime = section_of(law, article)
+    return {"id": uid, "law": law, "article": article, "part": part, "title": title, "text": text,
+            "section": section, "regime": regime}
 
 
 # --- ссылки между статьями ---

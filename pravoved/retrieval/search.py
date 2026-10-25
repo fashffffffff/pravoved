@@ -24,6 +24,8 @@ class Hit:
     score: float
     citation: str
     via: str = ""   # почему попала в выдачу, если пришла из графа
+    section: str = ""   # раздел кодекса, например "ГК, гл. 34 §2 Прокат"
+    regime: str = ""    # код вида договора или особого режима для этого раздела
 
 
 @lru_cache(maxsize=1)
@@ -46,6 +48,8 @@ def make_hit(unit, score, via=""):
         score=score,
         citation=citation(unit["law"], unit["article"]),
         via=via,
+        section=unit.get("section", ""),
+        regime=unit.get("regime", ""),
     )
 
 
