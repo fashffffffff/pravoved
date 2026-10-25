@@ -55,3 +55,7 @@ def test_answer_stats():
 def test_answer_stats_without_clarify():
     st = dialog.answer_stats("Можно вернуть.\nПочему:\n- Так сказано [1].")
     assert not st["clarify"] and st["questions"] == 0
+
+
+def test_cites_with_several_numbers():
+    assert dialog.answer_stats("Так сказано [1, 2] и ещё [3].")["cites"] == 2

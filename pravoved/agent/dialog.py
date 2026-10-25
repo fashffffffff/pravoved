@@ -18,7 +18,7 @@ REWRITE_USER = """История:
 Новое сообщение: {text}"""
 
 CLARIFY = re.compile(r"уточните", re.IGNORECASE)
-CITE = re.compile(r"\[\d+\]")
+CITE = re.compile(r"\[\d+(?:\s*,\s*\d+)*\]")
 # вопросительные предложения в блоке после «Уточните»
 QUESTION = re.compile(r"[^\n?]*\?")
 
