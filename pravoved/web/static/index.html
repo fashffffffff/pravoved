@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="ru" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Правовед</title>
+  <meta name="color-scheme" content="dark light">
+  <script>document.documentElement.dataset.theme = localStorage.getItem("theme") || "dark";</script>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="top">
+    <a class="brand" href="/" aria-label="Правовед">Правовед</a>
+    <nav class="tabs" role="tablist">
+      <button role="tab" data-view="chat" aria-selected="true">Вопрос</button>
+      <button role="tab" data-view="contract" aria-selected="false">Договор</button>
+      <button role="tab" data-view="scan" aria-selected="false">Скан</button>
+    </nav>
+    <div class="top-actions">
+      <button id="new-chat" class="ghost" type="button" title="Начать новый диалог">Очистить</button>
+      <button id="theme" class="icon" type="button" aria-label="Сменить тему" title="Сменить тему"></button>
+    </div>
+  </header>
+
+  <main>
+    <section id="view-chat" class="view">
+      <div id="empty" class="empty">
+        <h1>Правовед</h1>
+        <p class="lead">Помощник по бытовому праву: права потребителя, трудовые споры, аренда жилья. Каждая ссылка на статью сверена с текстом закона.</p>
+        <ul id="examples" class="examples"></ul>
+      </div>
+      <div id="log" class="log" aria-live="polite"></div>
+    </section>
+
+    <section id="view-contract" class="view" hidden>
+      <div class="doc-head">
+        <h2>Проверка договора</h2>
+        <p>Загрузите договор: каждый пункт получит оценку и ссылку на норму закона.</p>
+      </div>
+      <div id="contract-stub" class="note" hidden>Проверка договоров ещё не подключена к серверу.</div>
+      <label id="contract-drop" class="drop">
+        <input id="contract-file" type="file" accept=".txt,.docx,.pdf,.jpg,.jpeg,.png">
+        <strong>Выберите файл или перетащите сюда</strong>
+        <span>txt, docx, pdf, jpg, png, до 20 МБ</span>
+      </label>
+      <div id="contract-out"></div>
+    </section>
+
+    <section id="view-scan" class="view" hidden>
+      <div class="doc-head">
+        <h2>Распознать скан</h2>
+        <p>Фото или скан документа превратится в текст, который можно скопировать.</p>
+      </div>
+      <div id="scan-stub" class="note" hidden>Распознавание сканов ещё не подключено к серверу.</div>
+      <label id="scan-drop" class="drop">
+        <input id="scan-file" type="file" accept=".jpg,.jpeg,.png,.pdf">
+        <strong>Выберите файл или перетащите сюда</strong>
+        <span>jpg, png, pdf, до 20 МБ</span>
+      </label>
+      <div id="scan-out"></div>
+    </section>
+  </main>
+
+  <footer class="dock" id="dock">
+    <form id="form" class="composer">
+      <textarea id="input" rows="1" placeholder="Опишите ситуацию" aria-label="Вопрос"></textarea>
+      <button id="send" type="submit" aria-label="Отправить">Спросить</button>
+    </form>
+    <div class="statusline">
+      <span id="corpus"></span>
+      <span id="model"></span>
+      <label class="switch"><input id="web" type="checkbox" checked><span class="track"></span>Поиск в интернете</label>
+    </div>
+  </footer>
+
+  <div id="pop" class="pop" role="tooltip" hidden></div>
+  <script src="app.js"></script>
+</body>
+</html>
