@@ -3,14 +3,23 @@ import asyncio
 import os
 
 from rich.console import Console
-from rich.markdown import Markdown
+from pathlib import Path
 
+from rich.markdown import Markdown
+from rich.table import Table
+from rich.text import Text
+
+from pravoved.agent import run as agent_run
+from pravoved.agent.chat import Chat
+from pravoved.agent.contract import COLORS, read_file
 from pravoved.agent.run import ask, make_agent
 from pravoved.corpus.meta import corpus_date
 from pravoved.retrieval.store import close_client
 
 console = Console()
 BADGE_COLORS = {"official": "green", "authority": "green", "draft": "yellow", "unverified": "red"}
+CLAUSE_COLORS = {"red": "red", "yellow": "yellow", "green": "green"}
+KIND_NAMES = {"rent": "найм жилья", "labour": "трудовой договор", "consumer": "договор с потребителем"}
 
 
 def show_step(node, update):
@@ -61,6 +70,49 @@ def show_result(res):
         console.print("[dim]База: законы по состоянию на %s[/dim]" % base.strftime("%d.%m.%Y"))
 
 
+def show_progress(i, n):
+    console.print("[dim]проверяю пункты, часть %d из %d...[/dim]" % (i, n))
+
+
+def short(text, n):
+    return text if len(text) <= n else text[:n - 1] + "…"
+
+
+def show_contract(res):
+    console.print()
+    table = Table(show_lines=True)
+    table.add_column("№")
+    table.add_column("")
+    table.add_column("Пункт", max_width=45)
+    table.add_column("Что не так", max_width=50)
+    table.add_column("Статьи", max_width=26)
+    for r in res["clauses"]:
+        if r["color"] == "green":
+            continue
+        cites = "\n".join(c["citation"] for c in r["cites"])
+        table.add_row(r["id"], COLORS[r["color"]], Text(short(r["text"], 160)), Text(r["reason"], style=CLAUSE_COLORS[r["color"]]), cites)
+    if table.row_count:
+        console.print(table)
+    c = res["counts"]
+    console.print("\n[bold]Итого[/bold] (%s): 🔴 %d  🟡 %d  🟢 %d, всего пунктов %d"
+                  % (KIND_NAMES[res["kind"]], c["red"], c["yellow"], c["green"], len(res["clauses"])))
+    if res["top_risks"]:
+        console.print("\n[bold]Главные риски:[/bold]")
+        for r in res["top_risks"]:
+            console.print("🔴 п. %s: %s" % (r["id"], r["reason"]), highlight=False)
+    console.print("[dim]%.1f с[/dim]" % res["seconds"])
+
+
+def show_chat_reply(reply):
+    if reply["kind"] == "answer":
+        show_result(reply)
+    elif reply["kind"] == "contract":
+        show_contract(reply["result"])
+    else:
+        console.print()
+        console.print(reply["text"], highlight=False)
+
+
 async def run(args):
     if args.debug:
         os.environ["PRAVOVED_DEBUG"] = "1"
@@ -69,6 +121,11 @@ async def run(args):
     if args.cmd == "ask":
         show_result(await ask(graph, args.question, on_step))
         return
+    if args.cmd == "check":
+        text = await read_file(Path(args.file).expanduser(), agent_run.kit["tools"])
+        show_contract(await agent_run.check_contract_text(text, args.file, show_progress))
+        return
+    chat = Chat(graph)
     console.print("Правовед. Пустая строка или Ctrl-D - выход.")
     while True:
         try:
@@ -77,7 +134,7 @@ async def run(args):
             break
         if not question:
             break
-        show_result(await ask(graph, question, on_step))
+        show_chat_reply(await chat.turn(question, on_step, show_progress))
 
 
 def main():
@@ -86,6 +143,7 @@ def main():
     parser = argparse.ArgumentParser(prog="pravoved")
     sub = parser.add_subparsers(dest="cmd", required=True)
     sub.add_parser("ask", parents=[common]).add_argument("question")
+    sub.add_parser("check", parents=[common]).add_argument("file", help="договор: txt, docx, pdf или скан (jpg, png)")
     sub.add_parser("chat", parents=[common])
     args = parser.parse_args()
     try:
