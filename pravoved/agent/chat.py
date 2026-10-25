@@ -4,6 +4,7 @@ from pathlib import Path
 from pravoved.agent import run
 from pravoved.agent.claim import ClaimSession, is_claim_request
 from pravoved.agent.contract import read_file
+from pravoved.agent.dialog import format_history, rewrite_question
 
 CONTRACT_WORDS = re.compile(r"договор", re.IGNORECASE)
 CHECK_VERBS = re.compile(r"провер|проанализир|посмотр|оцен|разбер", re.IGNORECASE)
@@ -30,6 +31,7 @@ class Chat:
         self.graph = graph
         self.claim = None
         self.wait_contract = False
+        self.history = []  # пары (вопрос человека, ответ)
 
     async def turn(self, text, on_step=None, on_progress=None):
         """-> {"kind": "answer" | "claim" | "contract" | "text", ...}"""
@@ -42,7 +44,13 @@ class Chat:
             return {"kind": "claim", **reply}
         if self.wait_contract or is_contract_request(text):
             return await self.turn_contract(text, on_progress)
-        return {"kind": "answer", **await run.ask(self.graph, text, on_step)}
+        return await self.turn_answer(text, on_step)
+
+    async def turn_answer(self, text, on_step=None):
+        question, _ = await rewrite_question(run.kit["llm"], self.history, text)
+        res = await run.ask(self.graph, question, on_step, format_history(self.history))
+        self.history.append((text, res["answer"]))
+        return {"kind": "answer", "original": text, **res}
 
     async def turn_contract(self, text, on_progress):
         path = find_file(text)
@@ -54,7 +62,7 @@ class Chat:
         elif self.wait_contract and not is_contract_request(text):
             # человек передумал и задал другой вопрос
             self.wait_contract = False
-            return {"kind": "answer", **await run.ask(self.graph, text)}
+            return await self.turn_answer(text)
         else:
             self.wait_contract = True
             return {"kind": "text", "text": "Пришлите путь к файлу договора (txt, docx, pdf, jpg) или вставьте его текст."}

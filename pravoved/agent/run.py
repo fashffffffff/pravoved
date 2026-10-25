@@ -26,12 +26,15 @@ async def make_agent():
     return build_graph(kit["llm"], kit["tools"])
 
 
-async def ask(graph, question, on_step=None):
-    """Прогоняет вопрос через граф. on_step(имя_узла, обновление) - для режима --debug."""
+async def ask(graph, question, on_step=None, history=""):
+    """Прогоняет вопрос через граф. on_step(имя_узла, обновление) - для режима --debug.
+    history - краткая история диалога строкой, для одиночных вопросов пустая."""
     start = time.time()
     final = None
-    async for mode, data in graph.astream({"question": question, "queries": [question], "retries": 0, "hits": []},
-                                          stream_mode=["updates", "values"]):
+    state = {"question": question, "queries": [question], "retries": 0, "hits": []}
+    if history:
+        state["history"] = history
+    async for mode, data in graph.astream(state, stream_mode=["updates", "values"]):
         if mode == "updates" and on_step:
             for node, update in data.items():
                 on_step(node, update)
