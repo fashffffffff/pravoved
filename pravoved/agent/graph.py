@@ -10,7 +10,7 @@ from langchain_core.messages import HumanMessage, SystemMessage, ToolMessage
 from langgraph.graph import END, StateGraph
 
 from pravoved.agent import prompts
-from pravoved.agent.tools import WEB_TOOLS
+from pravoved.agent.tools import DOC_TOOLS, WEB_TOOLS
 from pravoved.agent.verify import check_citations, only_unverified, strip_unverified, unbacked_numbers, unverified_cited
 from pravoved.corpus.meta import corpus_date
 from pravoved.mcp_server.web import TRUST_ORDER
@@ -183,7 +183,7 @@ def verify(state):
 
 def build_graph(llm, tools):
     tools_by_name = {t.name: t for t in tools}
-    answer_tools = [t for t in tools if t.name not in WEB_TOOLS]
+    answer_tools = [t for t in tools if t.name not in WEB_TOOLS | DOC_TOOLS]
     llm_tools = llm.bind_tools(answer_tools) if answer_tools else llm
     llm_forced = llm.bind_tools(answer_tools, tool_choice="required") if answer_tools else None
     web_on = web_enabled() and WEB_TOOLS <= set(tools_by_name)

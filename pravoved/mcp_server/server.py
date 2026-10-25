@@ -2,10 +2,11 @@ import argparse
 import logging
 import os
 from datetime import date
+from pathlib import Path
 
 from mcp.server.fastmcp import FastMCP
 
-from pravoved.mcp_server import calc, cases, key_rate, web
+from pravoved.mcp_server import calc, cases, documents, key_rate, ocr, web
 
 # подробные логи (запросы mcp, httpx, ddgs) только под --debug, CLI передаёт PRAVOVED_DEBUG
 DEBUG = os.environ.get("PRAVOVED_DEBUG") == "1"
@@ -15,8 +16,15 @@ if not DEBUG:
         logging.getLogger(name).setLevel(logging.WARNING)
 
 
+OUT_DIR = Path(__file__).resolve().parents[2] / "data" / "out"
+
+
 def parse_date(s: str | None) -> date:
     return date.fromisoformat(s) if s else date.today()
+
+
+def today_str():
+    return date.today().strftime("%d.%m.%Y")
 
 
 @mcp.tool()
@@ -105,7 +113,38 @@ def read_page(url: str) -> dict:
     return web.read(url)
 
 
-# TODO: draft_document (.docx), add_to_calendar (.ics), read_scan - следующая фаза
+@mcp.tool()
+def draft_claim(kind: str, sender_name: str = "", sender_address: str = "", recipient: str = "",
+                recipient_address: str = "", facts: str = "", demand: str = "", date: str | None = None,
+                sender_phone: str = "", amount: str = "", calc_breakdown: str = "", answer_days: int = 10,
+                attachments: list[str] | None = None) -> dict:
+    """Составить претензию в виде файла .docx (лежит в data/out). Возвращает путь к файлу и текст претензии.
+    Если каких-то обязательных полей не хватает, вернёт список missing - их нужно спросить у человека.
+    kind: consumer_refund - возврат денег за товар с недостатком, consumer_penalty - неустойка за просрочку
+    (потребитель), salary_delay - задержка зарплаты.
+    Обязательные поля: sender_name (ФИО), sender_address, recipient (кому: продавец или работодатель),
+    recipient_address, facts (что произошло, с датами), demand (чего требует человек), date (дата претензии,
+    по умолчанию сегодня). Необязательные: sender_phone, amount (сумма), calc_breakdown (расчёт из калькулятора,
+    вставляй как есть), answer_days (срок ответа в днях), attachments (список приложений)."""
+    data = {"sender_name": sender_name, "sender_address": sender_address, "recipient": recipient,
+            "recipient_address": recipient_address, "facts": facts, "demand": demand,
+            "date": date or today_str(), "sender_phone": sender_phone, "amount": amount,
+            "calc_breakdown": calc_breakdown, "answer_days": answer_days, "attachments": attachments or []}
+    return documents.draft_claim_docx(kind, data, str(OUT_DIR))
+
+
+@mcp.tool()
+def add_to_calendar(title: str, date: str, description: str = "", remind_days_before: int = 1) -> dict:
+    """Создать событие-напоминание в виде файла .ics (лежит в data/out), например срок ответа на претензию.
+    date - дата события, ГГГГ-ММ-ДД или ДД.ММ.ГГГГ; remind_days_before - за сколько дней напомнить."""
+    return documents.make_calendar_event(title, date, description, remind_days_before, str(OUT_DIR))
+
+
+@mcp.tool()
+def read_scan(path: str) -> dict:
+    """Прочитать текст со скана или фотографии документа (jpg, png) или из pdf. Возвращает текст,
+    число страниц и уверенность распознавания; если текст распознан плохо, есть предупреждение."""
+    return ocr.read_scan(path)
 
 
 @mcp.resource("law://{law}/{article}")
@@ -133,8 +172,8 @@ def check_contract(contract_text: str) -> str:
     )
 
 
-@mcp.prompt()
-def draft_claim(situation: str) -> str:
+@mcp.prompt(name="draft_claim")
+def claim_prompt(situation: str) -> str:
     """Составь претензию"""
     return (
         "Составь досудебную претензию по ситуации ниже. Структура: кому и от кого, описание фактов с датами, "
