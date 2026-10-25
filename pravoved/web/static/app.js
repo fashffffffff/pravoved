@@ -20,9 +20,7 @@ const EXAMPLES = [
   ["Какая сейчас ключевая ставка и как она влияет на неустойку?", "расчёты"],
   ["Магазин отказывается принять назад бракованный товар", "потребитель"],
 ];
-const ICON_WARN = '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M10 3 2 17h16L10 3Z"/><path d="M10 8v4M10 14.5v.01"/></svg>';
-const ICON_SUN = '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><circle cx="10" cy="10" r="3.5"/><path d="M10 2v2M10 16v2M2 10h2M16 10h2M4.3 4.3l1.4 1.4M14.3 14.3l1.4 1.4M4.3 15.7l1.4-1.4M14.3 5.7l1.4-1.4"/></svg>';
-const ICON_MOON = '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M16.5 11.5A6.5 6.5 0 0 1 8.5 3.5a6.5 6.5 0 1 0 8 8Z"/></svg>';
+const icon = (name) => '<svg class="i"><use href="#i-' + name + '"/></svg>';
 
 const $ = (id) => document.getElementById(id);
 const log = $("log");
@@ -100,21 +98,22 @@ function el(html) {
   return t.content.firstElementChild;
 }
 
-function trustLabel(t) {
-  return '<span class="trust t-' + esc(t) + '">' + esc(TRUST[t] || t) + "</span>";
+function trustLabel(t, i) {
+  const mark = t === "draft" || t === "unverified" ? icon("warn") : '<svg class="i" style="--i:' + (i || 0) + '"><use href="#i-check"/></svg>';
+  return '<span class="tag-trust t-' + esc(t) + '">' + mark + esc(TRUST[t] || t) + "</span>";
 }
 
 function sourcesHtml(sources) {
   if (!sources || !sources.length) return "";
-  const rows = sources.map((s) => {
-    const meta = [trustLabel(s.trust)];
-    if (s.url) meta.push('<a href="' + esc(s.url) + '" target="_blank" rel="noopener noreferrer">' + esc(s.url) + "</a>");
-    if (s.date) meta.push("дата: " + esc(s.date));
-    return '<li class="source t-' + esc(s.trust) + '" id="src-%ID%-' + s.n + '"><span class="n">' + s.n + '</span><span class="cit">' +
-      esc(s.citation) + '</span><div class="meta">' + meta.join("") + "</div>" +
-      (s.via ? '<div class="via">через граф: ' + esc(s.via) + "</div>" : "") + "</li>";
+  const rows = sources.map((s, i) => {
+    const sub = [];
+    if (s.url) sub.push('<a href="' + esc(s.url) + '" target="_blank" rel="noopener noreferrer">' + esc(s.url) + "</a>");
+    if (s.date) sub.push("дата: " + esc(s.date));
+    if (s.via) sub.push("через граф: " + esc(s.via));
+    return '<li class="source" id="src-%ID%-' + s.n + '"><span class="n">' + s.n + '</span><span class="cit">' + esc(s.citation) +
+      "</span>" + trustLabel(s.trust, i) + (sub.length ? '<div class="sub">' + sub.map((x) => "<span>" + x + "</span>").join("") + "</div>" : "") + "</li>";
   });
-  return '<div class="block"><h3 class="block-title">Источники</h3><ol class="sources" style="list-style:none">' + rows.join("") + "</ol></div>";
+  return '<div class="block"><h3 class="block-title">Источники</h3><ol class="sources">' + rows.join("") + "</ol></div>";
 }
 
 function warningsHtml(r) {
@@ -123,7 +122,7 @@ function warningsHtml(r) {
   if (r.unverified_cited) w.push(["red", "В ответе есть ссылки на непроверенные источники: " + r.unverified_cited + ". Перед использованием проверьте их вручную."]);
   if (r.unbacked_numbers) w.push(["", "Проверьте цифры: " + r.unbacked_numbers + " чисел в ответе не подтверждены ни расчётом, ни источником."]);
   if (r.invalid) w.push(["red", "Ссылки на несуществующие статьи: " + r.invalid + "."]);
-  return w.map(([c, t]) => '<div class="warn ' + c + '">' + ICON_WARN + "<div>" + esc(t) + "</div></div>").join("");
+  return w.map(([c, t]) => '<div class="warn ' + c + '">' + icon('warn') + "<div>" + esc(t) + "</div></div>").join("");
 }
 
 function callsHtml(calls) {
@@ -131,20 +130,20 @@ function callsHtml(calls) {
   const body = calls.map((c) =>
     '<div class="call"><div class="name">' + esc(c.name) + "</div><pre>" + esc(JSON.stringify(c.args, null, 2)) +
     '</pre><pre class="res">' + esc(String(c.result).slice(0, 2000)) + "</pre></div>").join("");
-  return '<div class="block"><details class="calc"><summary>Расчёты и вызовы инструментов (' + calls.length + ")</summary>" + body + "</details></div>";
+  return '<div class="block"><details class="calc"><summary>' + icon("calc") + 'Расчёты и вызовы инструментов (' + calls.length + ")</summary>" + body + "</details></div>";
 }
 
 function filesHtml(files) {
   if (!files || !files.length) return "";
   return '<div class="block files">' + files.map((f) =>
-    '<a class="btn" href="' + esc(f.url) + '" download>Скачать ' + esc(f.name) + "</a>").join("") + "</div>";
+    '<a class="btn" href="' + esc(f.url) + '" download>' + icon("down") + "Скачать " + esc(f.name) + "</a>").join("") + "</div>";
 }
 
 function botHtml(r, id) {
   const sources = r.sources || [];
   let body;
   if (r.refused) {
-    body = '<div class="refusal"><div class="label">Агент не стал отвечать</div><div class="answer">' + markdown(r.answer, sources) + "</div></div>";
+    body = '<div class="refusal"><div class="label">Агент воздержался от ответа</div><div class="answer">' + markdown(r.answer, sources) + "</div></div>";
   } else {
     body = '<div class="answer">' + markdown(r.answer, sources) + "</div>";
   }
@@ -158,8 +157,8 @@ function showEmpty(on) {
   $("empty").hidden = !on;
 }
 
-function addUser(text) {
-  const div = el('<div class="msg-user"></div>');
+function addUser(text, i) {
+  const div = el('<div class="msg-user" id="u-' + i + '"></div>');
   div.textContent = text;
   log.appendChild(div);
 }
@@ -173,10 +172,24 @@ function addBot(r, id) {
   return div;
 }
 
+function renderRecent() {
+  const asked = history.map((m, i) => [m, i]).filter(([m]) => m.role === "user");
+  $("recent").innerHTML = asked.map(([m, i]) => '<li><button type="button" data-i="' + i + '">' + esc(m.text) + "</button></li>").join("");
+  $("recent-empty").hidden = asked.length > 0;
+}
+
+$("recent").addEventListener("click", (e) => {
+  const b = e.target.closest("button");
+  const target = b && document.getElementById("u-" + b.dataset.i);
+  if (target) target.scrollIntoView({ behavior: "smooth", block: "start" });
+  $("rail").classList.remove("open");
+});
+
 function render() {
   log.innerHTML = "";
-  history.forEach((m, i) => (m.role === "user" ? addUser(m.text) : addBot(m.result, i)));
+  history.forEach((m, i) => (m.role === "user" ? addUser(m.text, i) : addBot(m.result, i)));
   showEmpty(history.length === 0);
+  renderRecent();
 }
 
 function save() {
@@ -214,17 +227,16 @@ function makeProgress(first) {
   const box = el('<div class="msg-bot"><div class="progress"></div></div>');
   const list = box.firstChild;
   const started = Date.now();
-  const clock = el('<div class="step"><span class="clock"></span></div>');
-  const tick = () => { clock.firstChild.textContent = ((Date.now() - started) / 1000).toFixed(0) + " с"; };
+  const clock = el('<div class="clock"></div>');
+  const tick = () => { clock.textContent = ((Date.now() - started) / 1000).toFixed(0) + " с"; };
   tick();
   const timer = setInterval(tick, 1000);
   let live = null;
   const api = {
     box,
-    step(label, detail) {
+    step(label) {
       if (live) live.classList.replace("live", "done");
-      live = el('<div class="step live"><span class="dot"></span><span>' + esc(label) +
-        '</span><span class="detail">' + esc(detail || "") + "</span></div>");
+      live = el('<div class="step live"><span class="mark">' + icon("check") + "</span><span>" + esc(label) + '</span><span class="detail"></span></div>');
       clock.remove();
       list.append(live, clock);
     },
@@ -258,7 +270,8 @@ async function send(question) {
   question = question.trim();
   history.push({ role: "user", text: question });
   showEmpty(false);
-  addUser(question);
+  addUser(question, history.length - 1);
+  renderRecent();
   input.value = "";
   autosize();
 
@@ -375,7 +388,6 @@ $("new-chat").addEventListener("click", () => {
 function applyTheme(t) {
   document.documentElement.dataset.theme = t;
   localStorage.setItem("theme", t);
-  $("theme").innerHTML = t === "dark" ? ICON_SUN : ICON_MOON;
 }
 $("theme").addEventListener("click", () => applyTheme(document.documentElement.dataset.theme === "dark" ? "light" : "dark"));
 applyTheme(document.documentElement.dataset.theme);
@@ -384,12 +396,18 @@ $("web").checked = localStorage.getItem("web") !== "off";
 $("web").addEventListener("change", () => localStorage.setItem("web", $("web").checked ? "on" : "off"));
 
 /* вкладки */
-document.querySelectorAll(".tabs button").forEach((b) => b.addEventListener("click", () => {
-  document.querySelectorAll(".tabs button").forEach((x) => x.setAttribute("aria-selected", String(x === b)));
+document.querySelectorAll(".nav button").forEach((b) => b.addEventListener("click", () => {
+  document.querySelectorAll(".nav button").forEach((x) => x.setAttribute("aria-selected", String(x === b)));
   for (const v of ["chat", "contract", "scan"]) $("view-" + v).hidden = v !== b.dataset.view;
   $("dock").hidden = b.dataset.view !== "chat";
+  $("rail").classList.remove("open");
   window.scrollTo(0, 0);
 }));
+
+$("menu").addEventListener("click", () => {
+  const open = $("rail").classList.toggle("open");
+  $("menu").setAttribute("aria-expanded", String(open));
+});
 
 /* файлы */
 function dropzone(id, fileId, handler) {
@@ -433,21 +451,21 @@ function contractHtml(r) {
   const risks = (r.top_risks || []).map((x) => "<li>п. " + esc(x.id) + ": " + esc(x.reason || x.text.slice(0, 100)) + "</li>").join("");
   const rest = r.clauses.filter((c) => c.color === "green");
   const flagged = r.clauses.filter((c) => c.color !== "green");
-  return '<div class="summary"><h3>' + esc(r.filename || "Договор") + (kinds[r.kind] ? " — " + kinds[r.kind] : "") + "</h3>" +
+  return '<div class="summary"><h2>' + esc(r.filename || "Договор") + (kinds[r.kind] ? " — " + kinds[r.kind] : "") + "</h2>" +
     '<div class="bar"><i class="red" style="flex:' + n.red / total + '"></i><i class="yellow" style="flex:' + n.yellow / total +
     '"></i><i class="green" style="flex:' + n.green / total + '"></i></div>' +
     '<div class="counts"><span><b>' + n.red + "</b> рискованных</span><span><b>" + n.yellow + "</b> требуют внимания</span><span><b>" + n.green + "</b> в порядке</span></div>" +
-    (risks ? '<div><div class="block-title">Главные риски</div><ul class="risks">' + risks + "</ul></div>" : "") +
-    (r.invalid ? '<div class="warn red">' + ICON_WARN + "<div>Неверных ссылок на статьи: " + r.invalid + ".</div></div>" : "") + "</div>" +
+    (risks ? '<div><h3 class="block-title">Главные риски</h3><ul class="risks">' + risks + "</ul></div>" : "") +
+    (r.invalid ? '<div class="warn red">' + icon('warn') + "<div>Неверных ссылок на статьи: " + r.invalid + ".</div></div>" : "") + "</div>" +
     '<div class="clauses">' + flagged.map(clauseHtml).join("") + "</div>" +
-    (rest.length ? '<details class="calc fold"><summary>Пункты в порядке (' + rest.length + ')</summary><div class="clauses" style="padding:12px">' +
+    (rest.length ? '<details class="calc fold"><summary>' + icon("check") + 'Пункты в порядке (' + rest.length + ')</summary><div class="clauses" style="padding:12px">' +
       rest.map(clauseHtml).join("") + "</div></details>" : "") +
     '<div class="footnote">' + (r.seconds || 0).toFixed(1) + " с</div>";
 }
 
 dropzone("contract-drop", "contract-file", async (file) => {
   const out = $("contract-out");
-  out.innerHTML = '<div class="progress"><div class="step live"><span class="dot"></span><span id="cp">Читаю ' + esc(file.name) + "</span></div></div>";
+  out.innerHTML = '<div class="progress"><div class="step live"><span class="mark">' + icon("check") + '</span><span id="cp">Читаю ' + esc(file.name) + "</span></div></div>";
   let done = false;
   try {
     await stream("/api/contract", upload(file), (ev, data) => {
@@ -463,12 +481,12 @@ dropzone("contract-drop", "contract-file", async (file) => {
 
 dropzone("scan-drop", "scan-file", async (file) => {
   const out = $("scan-out");
-  out.innerHTML = '<div class="progress"><div class="step live"><span class="dot"></span><span>Распознаю ' + esc(file.name) + "</span></div></div>";
+  out.innerHTML = '<div class="progress"><div class="step live"><span class="mark">' + icon("check") + '</span><span>Распознаю ' + esc(file.name) + "</span></div></div>";
   try {
     const resp = await fetch("/api/scan", upload(file));
     const data = await resp.json();
     if (!resp.ok) throw new Error(data.error || data.detail || "ошибка " + resp.status);
-    out.innerHTML = '<div class="scan-text"></div><div class="block files"><button class="btn quiet" type="button" id="copy">Скопировать текст</button></div>';
+    out.innerHTML = '<div class="scan-text"></div><div class="block files"><button class="btn quiet" type="button" id="copy">' + icon("copy") + 'Скопировать текст</button></div>';
     out.firstChild.textContent = data.text || "Текст не найден.";
     $("copy").addEventListener("click", () => navigator.clipboard.writeText(data.text));
   } catch (e) {
