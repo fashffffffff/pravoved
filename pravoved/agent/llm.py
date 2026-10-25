@@ -6,9 +6,11 @@ from langchain_openai import ChatOpenAI
 load_dotenv()
 
 
-def make_llm():
+def make_llm(thinking=None):
     # модель меняется только через .env: LLM_BASE_URL, LLM_MODEL, LLM_API_KEY, LLM_THINKING
-    thinking = os.environ.get("LLM_THINKING", "false").lower() == "true"
+    # LLM_THINKING=answer - рассуждения только на шаге ответа, служебные вызовы без них
+    if thinking is None:
+        thinking = os.environ.get("LLM_THINKING", "false").lower() == "true"
     extra = None if thinking else {"chat_template_kwargs": {"enable_thinking": False}}
     return ChatOpenAI(
         base_url=os.environ.get("LLM_BASE_URL", "http://localhost:8080/v1"),

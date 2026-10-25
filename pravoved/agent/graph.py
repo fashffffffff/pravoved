@@ -13,6 +13,7 @@ from pravoved.agent import prompts
 from pravoved.agent.cards import card_hits, pick_cards
 from pravoved.agent.clean import drop_repeats, strip_marks
 from pravoved.agent.faith import drop_markers, mismatch_reason, number_mismatch, pick_excerpt, plain, split_claims
+from pravoved.agent.llm import make_llm
 from pravoved.agent.situation import describe, filter_hits
 from pravoved.agent.tools import DOC_TOOLS, WEB_TOOLS
 from pravoved.agent.verify import check_citations, only_unverified, strip_unverified, unbacked_numbers, unverified_cited
@@ -220,8 +221,9 @@ def verify(state):
 def build_graph(llm, tools):
     tools_by_name = {t.name: t for t in tools}
     answer_tools = [t for t in tools if t.name not in WEB_TOOLS | DOC_TOOLS]
-    llm_tools = llm.bind_tools(answer_tools) if answer_tools else llm
-    llm_forced = llm.bind_tools(answer_tools, tool_choice="required") if answer_tools else None
+    answer_llm = make_llm(thinking=True) if os.environ.get("LLM_THINKING", "").lower() == "answer" else llm
+    llm_tools = answer_llm.bind_tools(answer_tools) if answer_tools else answer_llm
+    llm_forced = answer_llm.bind_tools(answer_tools, tool_choice="required") if answer_tools else None
     web_on = web_enabled() and WEB_TOOLS <= set(tools_by_name)
     faith_on = faith_enabled()
 
