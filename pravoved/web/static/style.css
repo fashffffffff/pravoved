@@ -115,6 +115,7 @@ main { flex: 1; width: 100%; max-width: calc(var(--col) + 2 * var(--pad)); margi
   vertical-align: .55em; border-bottom: 1px dotted currentColor; border-radius: 0; cursor: pointer;
 }
 .cite:hover, .cite:focus-visible { background: var(--accent); color: var(--bg); border-bottom-color: transparent; }
+.cite .br { font-size: 0; }
 .cite.bad { color: var(--bad); text-decoration: line-through; }
 .pop {
   position: fixed; z-index: 30; width: min(340px, calc(100vw - 24px)); padding: 12px 14px; background: var(--panel);

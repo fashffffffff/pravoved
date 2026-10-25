@@ -54,42 +54,57 @@ function inline(text, sources) {
 
 function cite(n, sources) {
   const known = sources.some((x) => String(x.n) === n);
-  if (!known) return '<button class="cite bad" type="button" data-n="' + n + '" title="такого источника нет">' + n + "</button>";
-  return '<button class="cite" type="button" data-n="' + n + '">' + n + "</button>";
+  // скобки спрятаны, но остаются в тексте: при копировании получится [3]
+  const label = '<span class="br">[</span>' + n + '<span class="br">]</span>';
+  if (!known) return '<button class="cite bad" type="button" data-n="' + n + '" title="такого источника нет">' + label + "</button>";
+  return '<button class="cite" type="button" data-n="' + n + '">' + label + "</button>";
 }
 
 function markdown(text, sources) {
   const lines = String(text).replace(/\r/g, "").split("\n");
   let out = "";
   let list = null;
+  let item = null; // текст открытого пункта списка, пока не пришла следующая строка
+  let blank = false;
   let para = [];
+  const endItem = () => {
+    if (item !== null) out += "<li>" + inline(item, sources) + "</li>";
+    item = null;
+  };
   const flush = () => {
     if (para.length) out += "<p>" + inline(para.join(" "), sources) + "</p>";
     para = [];
   };
   const close = () => {
+    endItem();
     if (list) out += "</" + list + ">";
     list = null;
   };
   for (const raw of lines) {
     const line = raw.trimEnd();
     let m;
-    if (!line.trim()) { flush(); continue; }
+    if (!line.trim()) { flush(); blank = true; continue; }
+    const wasBlank = blank;
+    blank = false;
     if ((m = line.match(/^#{1,4}\s+(.*)$/))) { flush(); close(); out += "<h3>" + inline(m[1], sources) + "</h3>"; continue; }
     if ((m = line.match(/^\s*[-*•]\s+(.*)$/))) {
       flush();
+      endItem();
       if (list !== "ul") { close(); out += "<ul>"; list = "ul"; }
-      out += "<li>" + inline(m[1], sources) + "</li>";
+      item = m[1];
       continue;
     }
     if ((m = line.match(/^\s*(\d+)[.)]\s+(.*)$/))) {
       flush();
       // нумерацию берём из текста: модель часто перемежает пункты абзацами
+      endItem();
       if (list !== "ol") { close(); out += '<ol start="' + m[1] + '">'; list = "ol"; }
-      out += "<li>" + inline(m[2], sources) + "</li>";
+      item = m[2];
       continue;
     }
     if ((m = line.match(/^>\s?(.*)$/))) { flush(); close(); out += "<blockquote>" + inline(m[1], sources) + "</blockquote>"; continue; }
+    // строка без маркера сразу под пунктом (или с отступом) продолжает этот пункт
+    if (item !== null && (!wasBlank || /^\s/.test(raw))) { item += " " + line.trim(); continue; }
     close();
     para.push(line.trim());
   }
@@ -117,8 +132,8 @@ function sourcesHtml(sources) {
     if (s.url) sub.push('<a href="' + esc(s.url) + '" target="_blank" rel="noopener noreferrer">' + esc(s.url) + "</a>");
     if (s.date) sub.push("дата: " + esc(s.date));
     if (s.via) sub.push("через граф: " + esc(s.via));
-    return '<li class="source" id="src-%ID%-' + s.n + '"><span class="n">' + s.n + '</span><span class="cit">' + esc(s.citation) +
-      "</span>" + trustLabel(s.trust, i) + (sub.length ? '<div class="sub">' + sub.map((x) => "<span>" + x + "</span>").join("") + "</div>" : "") + "</li>";
+    return '<li class="source" id="src-%ID%-' + s.n + '"><span class="n">' + s.n + '</span> <span class="cit">' + esc(s.citation) +
+      "</span> " + trustLabel(s.trust, i) + (sub.length ? ' <div class="sub">' + sub.map((x) => "<span>" + x + "</span>").join(" ") + "</div>" : "") + "</li>";
   });
   return '<div class="block"><h3 class="block-title">Источники</h3><ol class="sources">' + rows.join("") + "</ol></div>";
 }
