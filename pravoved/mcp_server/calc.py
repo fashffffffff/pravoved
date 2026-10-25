@@ -4,6 +4,7 @@ from decimal import ROUND_HALF_UP, Decimal
 from pravoved.mcp_server.key_rate import key_rate_periods
 
 KOPECK = Decimal("0.01")
+GOODS_TERM = 10   # дней на возврат денег за товар с недостатком (ст. 22)
 
 # kind -> (доля цены в день, основание, чем ограничена сумма)
 # с 01.02.2026 (ФЗ от 28.12.2025 N 500-ФЗ) неустойка по ст. 23 тоже ограничена
@@ -50,7 +51,7 @@ def penalty(price, days: int, kind: str, paid=None, grace_days: int = 0) -> dict
         breakdown = f"{all_days} дн. - {grace_days} дн. на исполнение = {days} дн.; " + breakdown
     if raw > total:
         breakdown += f"; {cap_note} ({cap}), поэтому {total}"
-    return {
+    res = {
         "penalty": str(total),
         "uncapped": str(raw),
         "capped": total != raw,
@@ -60,6 +61,12 @@ def penalty(price, days: int, kind: str, paid=None, grace_days: int = 0) -> dict
         "breakdown": breakdown,
         "legal_basis": basis,
     }
+    if kind == "goods_defect" and not grace_days and all_days > GOODS_TERM:
+        # если дни считали со дня требования, неустойка идёт только за дни после 10-дневного срока (ст. 22)
+        later = penalty(price, all_days, kind, paid, GOODS_TERM)
+        res["if_counted_from_demand"] = {"days": later["days"], "penalty": later["penalty"],
+                                         "breakdown": later["breakdown"]}
+    return res
 
 
 def salary_delay(amount, due_date: date, paid_date: date) -> dict:

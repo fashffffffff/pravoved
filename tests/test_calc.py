@@ -129,3 +129,12 @@ def test_deadline_complex_goods():
 def test_deadline_custom_needs_days():
     with pytest.raises(ValueError):
         calc.deadline(date(2026, 9, 1), None, "custom")
+
+
+def test_penalty_shows_variant_after_ten_day_term():
+    res = calc.penalty(40000, 12, "goods_defect")
+    assert res["penalty"] == "4800.00"
+    assert res["if_counted_from_demand"]["days"] == 2
+    assert res["if_counted_from_demand"]["penalty"] == "800.00"
+    assert "if_counted_from_demand" not in calc.penalty(40000, 8, "goods_defect")
+    assert calc.penalty(40000, 12, "goods_defect", grace_days=10)["penalty"] == "800.00"

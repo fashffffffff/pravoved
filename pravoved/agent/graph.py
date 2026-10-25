@@ -26,7 +26,7 @@ MAX_TOOL_STEPS = 5
 MAX_CLAIMS = 15
 SNIPPET = 1500
 WEB_SNIPPET = 4500
-MAX_WEB_PAGES = 3
+MAX_WEB_PAGES = 4
 MAX_WEB_TRIES = 5
 SITES = " site:consultant.ru OR site:pravo.gov.ru OR site:garant.ru"
 # практические страницы: порядок, сроки, документы

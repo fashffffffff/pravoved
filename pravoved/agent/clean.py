@@ -3,7 +3,7 @@ import re
 
 UNCONFIRMED = " [не подтверждено источниками]"
 # модель иногда сама пишет такие метки вместо ссылки
-TOOL_MARK = re.compile(r"\s*\[(?:инструмент|расчёт|расчет|калькулятор)[^\]]*\]", re.IGNORECASE)
+TOOL_MARK = re.compile(r"\s*\[(?:инструмент|расчёт|расчет|калькулятор|calc_\w+|get_key_rate|grace period)[^\]]*\]", re.IGNORECASE)
 ARTICLE_BEFORE = re.compile(r"((?:ст\.|стать\w+)\s*\d+(?:\.\d+)*(?:\s*(?:ГК|ТК|КоАП|ЗоЗПП)(?:\s*РФ)?)?)$", re.IGNORECASE)
 
 
@@ -44,7 +44,7 @@ def drop_repeats(text):
         # от строки остался один маркер списка
         if norm(line):
             out.append(line)
-    return re.sub(r"\n{3,}", "\n\n", "\n".join(out)).strip()
+    return re.sub(r"\n{3,}", "\n\n", "\n".join(renumber(out))).strip()
 
 
 def drop_sentence_repeats(line, seen):
@@ -61,3 +61,17 @@ def drop_sentence_repeats(line, seen):
         seen.add(key)
         keep.append(p)
     return prefix + " ".join(keep)
+
+
+def renumber(lines):
+    """После удаления повторов в списке «1. 2. 3.» мог пропасть пункт: нумеруем подряд идущие пункты заново"""
+    out, n = [], 0
+    for line in lines:
+        m = re.match(r"(\s*)\d+([.)])\s", line)
+        if m:
+            n += 1
+            line = "%s%d%s%s" % (m.group(1), n, m.group(2), line[m.end() - 1:])
+        elif line.strip() and not line.startswith((" ", "\t")):
+            n = 0
+        out.append(line)
+    return out

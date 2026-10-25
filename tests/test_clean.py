@@ -27,3 +27,14 @@ def test_numbered_steps_are_kept():
 def test_marker_only_lines_are_removed():
     text = "Вывод тут, и он достаточно длинный для проверки повторов.\n* \n* Вывод тут, и он достаточно длинный для проверки повторов.\nНиже."
     assert drop_repeats(text) == "Вывод тут, и он достаточно длинный для проверки повторов.\nНиже."
+
+
+def test_list_is_renumbered_after_drop():
+    text = ("Нужно подать заявление нотариусу в течение шести месяцев.\n\nЧто делать:\n"
+            "1. Нужно подать заявление нотариусу в течение шести месяцев.\n"
+            "2. Соберите документы о родстве.\n3. Получите свидетельство.")
+    assert drop_repeats(text).endswith("1. Соберите документы о родстве.\n2. Получите свидетельство.")
+
+
+def test_tool_names_in_brackets_are_removed():
+    assert strip_marks("Итого 4800 [calc_consumer_penalty] рублей [инструмент].")[0] == "Итого 4800 рублей."
