@@ -10,9 +10,6 @@ CHUNKS = ROOT / "data" / "chunks.jsonl"
 QDRANT_PATH = ROOT / "data" / "index" / "qdrant"
 COLLECTION = "pravoved"
 
-# если задан QDRANT_URL - ходим на сервер, иначе встроенный режим в папке data/index
-QDRANT_URL = os.environ.get("QDRANT_URL")
-
 LAW_NAMES = {
     "zozpp": "ЗоЗПП",
     "tk": "ТК РФ",
@@ -37,8 +34,11 @@ def load_units():
 
 @lru_cache(maxsize=1)
 def get_client():
-    if QDRANT_URL:
-        return QdrantClient(url=QDRANT_URL)
+    # если задан QDRANT_URL - ходим на сервер, иначе встроенный режим в папке data/index
+    # читаем при вызове, а не при импорте: .env может загрузиться позже
+    url = os.environ.get("QDRANT_URL")
+    if url:
+        return QdrantClient(url=url)
     QDRANT_PATH.mkdir(parents=True, exist_ok=True)
     return QdrantClient(path=str(QDRANT_PATH))
 
@@ -56,5 +56,6 @@ def citation(law, article):
 
 def close_client():
     # закрываем сами, иначе при выходе qdrant ругается в __del__
-    get_client().close()
-    get_client.cache_clear()
+    if get_client.cache_info().currsize:
+        get_client().close()
+        get_client.cache_clear()

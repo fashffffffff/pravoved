@@ -8,7 +8,7 @@ dependencies = [
     "beautifulsoup4",
     "lxml",
     "sentence-transformers",
-    "qdrant-client",
+    "qdrant-client<1.16",
     "rank-bm25",
     "snowballstemmer",
     "numpy",
