@@ -515,3 +515,9 @@ fetch("/api/info").then((r) => r.json()).then((i) => {
   $("scan-drop").hidden = !i.scan;
 });
 render();
+
+$("bg").value = document.documentElement.dataset.bg;
+$("bg").addEventListener("change", () => {
+  document.documentElement.dataset.bg = $("bg").value;
+  localStorage.setItem("bg", $("bg").value);
+});
