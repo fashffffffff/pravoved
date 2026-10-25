@@ -12,6 +12,10 @@ COLUMNS = [
     ("invalid_per_answer", "невер./ответ"),
     ("no_citation_answers", "без ссылок"),
     ("unbacked_numbers_per_answer", "цифры без опоры"),
+    ("claims_checked", "утверждений"),
+    ("claims_unsupported_per_answer", "неподтв./ответ"),
+    ("claims_fixed", "исправлено"),
+    ("claims_unresolved", "осталось"),
     ("expected_hit_any", "нужная ст."),
     ("expected_recall", "recall ст."),
     ("refusal_on_out_of_scope", "отказ вне базы"),
@@ -20,6 +24,7 @@ COLUMNS = [
     ("tool_selection_acc", "tool выбор"),
     ("tool_args_acc", "tool арг."),
     ("avg_latency_s", "сек/вопрос"),
+    ("avg_faith_s", "сек проверки"),
     ("avg_tokens_per_sec", "ток/с"),
     ("errors", "ошибки"),
 ]

@@ -102,6 +102,11 @@ def metrics(q_runs, t_runs):
         m["invalid_per_answer"] = mean([r["invalid"] for r in answered])
         m["no_citation_answers"] = sum(1 for r in answered if not r["sources"])
         m["unbacked_numbers_per_answer"] = mean([r.get("unbacked_numbers", 0) for r in answered])
+        m["claims_checked"] = sum(r.get("claims_checked", 0) for r in answered)
+        m["claims_unsupported_per_answer"] = mean([r.get("claims_unsupported", 0) for r in answered])
+        m["claims_unsupported"] = sum(r.get("claims_unsupported", 0) for r in answered)
+        m["claims_fixed"] = sum(r.get("claims_fixed", 0) for r in answered)
+        m["claims_unresolved"] = sum(r.get("claims_unresolved", 0) for r in answered)
         hits = [[e in cited_keys(r) for e in r["case"]["expected"]] for r in answered]
         m["expected_hit_any"] = mean([any(h) for h in hits])
         m["expected_recall"] = mean([sum(h) / len(h) for h in hits])
@@ -120,6 +125,7 @@ def metrics(q_runs, t_runs):
         m["tool_args_acc"] = mean([c["args_ok"] for c in checks])
     allr = ok + [r for r in t_runs if "error" not in r]
     m["avg_latency_s"] = mean([r["seconds"] for r in allr])
+    m["avg_faith_s"] = mean([r.get("faith_seconds", 0) for r in allr])
     m["avg_tokens_per_sec"] = mean([r["tokens_per_sec"] for r in allr if r.get("tokens_per_sec")])
     m["errors"] = len(q_runs) + len(t_runs) - len(allr)
     m["n_questions"] = len(q_runs)
