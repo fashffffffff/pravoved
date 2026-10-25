@@ -50,6 +50,13 @@ async def ask(graph, question, on_step=None):
         "unbacked_numbers": final.get("unbacked_numbers", 0),
         "web_used": bool(final.get("web_sources")),
         "warning": final.get("warning"),
+        "claims_checked": final.get("claims_checked", 0),
+        "claims_unsupported": final.get("claims_unsupported", 0),
+        "claims_partial": final.get("claims_partial", 0),
+        "claims_fixed": final.get("claims_fixed", 0),
+        "claims_unresolved": final.get("claims_unresolved", 0),
+        "faith_seconds": final.get("faith_seconds", 0),
+        "faith_issues": final.get("faith_issues", []),
         "seconds": round(time.time() - start, 2),
         **total_usage(final.get("usage", [])),
     }

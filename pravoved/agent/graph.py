@@ -10,6 +10,7 @@ from langchain_core.messages import HumanMessage, SystemMessage, ToolMessage
 from langgraph.graph import END, StateGraph
 
 from pravoved.agent import prompts
+from pravoved.agent.faith import drop_markers, mismatch_reason, number_mismatch, pick_excerpt, plain, split_claims
 from pravoved.agent.tools import DOC_TOOLS, WEB_TOOLS
 from pravoved.agent.verify import check_citations, only_unverified, strip_unverified, unbacked_numbers, unverified_cited
 from pravoved.corpus.meta import corpus_date
@@ -19,6 +20,7 @@ from pravoved.retrieval.search import search
 MAX_RETRIES = 2
 MAX_SOURCES = 10
 MAX_TOOL_STEPS = 5
+MAX_CLAIMS = 15
 SNIPPET = 1500
 WEB_SNIPPET = 3500
 MAX_WEB_PAGES = 3
@@ -63,6 +65,16 @@ class State(TypedDict, total=False):
     cited: int
     invalid: int
     warning: str
+    faith_round: int
+    faith_again: bool
+    faith_feedback: str
+    faith_seconds: float
+    faith_issues: list
+    claims_checked: int
+    claims_unsupported: int
+    claims_partial: int
+    claims_fixed: int
+    claims_unresolved: int
     usage: Annotated[list, operator.add]
 
 
@@ -87,8 +99,16 @@ def source_list(hits, web=()):
     return "\n\n".join(parts)
 
 
+def env_flag(name):
+    return os.environ.get(name, "true").strip().lower() not in ("0", "false", "no", "off")
+
+
 def web_enabled():
-    return os.environ.get("WEB_ENABLED", "true").strip().lower() not in ("0", "false", "no", "off")
+    return env_flag("WEB_ENABLED")
+
+
+def faith_enabled():
+    return env_flag("FAITH_CHECK")
 
 
 def relevant_part(text, question, limit):
@@ -187,6 +207,7 @@ def build_graph(llm, tools):
     llm_tools = llm.bind_tools(answer_tools) if answer_tools else llm
     llm_forced = llm.bind_tools(answer_tools, tool_choice="required") if answer_tools else None
     web_on = web_enabled() and WEB_TOOLS <= set(tools_by_name)
+    faith_on = faith_enabled()
 
     def retrieve(state):
         query = state["queries"][-1]
@@ -303,6 +324,8 @@ def build_graph(llm, tools):
         if state.get("strict"):
             system += prompts.STRICT_ADD
         user = prompts.ANSWER_USER.format(sources=source_list(hits, web_sources), question=state["question"])
+        if state.get("faith_feedback"):
+            user += "\n\n" + state["faith_feedback"]
         msgs = [SystemMessage(system), HumanMessage(user)]
         force = needs_calc(state["question"])
         text, calls, usage = await tool_loop(list(msgs), force)
@@ -354,7 +377,80 @@ def build_graph(llm, tools):
             return "Ошибка инструмента: %s" % e
 
     def after_verify(state):
-        return "answer" if state["again"] else "end"
+        if state["again"]:
+            return "answer"
+        return "faithfulness" if faith_on else "end"
+
+    def after_faith(state):
+        return "answer" if state["faith_again"] else "end"
+
+    async def judge(pairs):
+        # одним запросом: пары (утверждение, выдержка) -> {номер пары: (вердикт, причина)}
+        items = "\n\n".join("%d. Утверждение: %s\nИсточник: %s" % (i, claim, excerpt)
+                             for i, (claim, excerpt) in enumerate(pairs, 1))
+        t = time.time()
+        msg = await llm.ainvoke([SystemMessage(prompts.FAITH_SYSTEM), HumanMessage(items)])
+        data = parse_json(strip_think(msg.content)) or {}
+        verdicts = {}
+        for v in data.get("verdicts", []):
+            try:
+                verdicts[int(v["id"])] = (str(v.get("verdict")), str(v.get("reason") or ""))
+            except (KeyError, TypeError, ValueError):
+                pass
+        return verdicts, [usage_of(msg, time.time() - t)]
+
+    async def faithfulness(state):
+        start = time.time()
+        hits = state["hits"]
+        web_sources = state.get("web_sources", [])
+        texts = {i: h.text for i, h in enumerate(hits, 1)}
+        texts.update({i: w["text"] for i, w in enumerate(web_sources, len(hits) + 1)})
+        tool_text = "\n".join(c["result"] for c in state["tool_calls"])
+        checked, to_ask = [], []
+        for c in split_claims(state["answer"])[:MAX_CLAIMS]:
+            cited = [n for n in dict.fromkeys(c["nums"]) if n in texts]
+            if not cited:
+                continue
+            source = "\n".join(texts[n] for n in cited)
+            c["excerpt"] = "\n".join("[%d] %s" % (n, pick_excerpt(texts[n], c["text"])) for n in cited)
+            c["verdict"], c["reason"], c["by"] = "supported", "", "rules"
+            problems = number_mismatch(c["text"], source + "\n" + tool_text + "\n" + state["question"])
+            if problems:
+                c["verdict"], c["reason"], c["by"] = "not_supported", mismatch_reason(problems), "numbers"
+            else:
+                to_ask.append(c)
+            checked.append(c)
+        usage = []
+        if to_ask:
+            verdicts, usage = await judge([(plain(c["text"]), c["excerpt"]) for c in to_ask])
+            for i, c in enumerate(to_ask, 1):
+                verdict, reason = verdicts.get(i, ("supported", ""))
+                if verdict in ("not_supported", "partially"):
+                    c["verdict"], c["reason"], c["by"] = verdict, reason, "llm"
+        bad = [c for c in checked if c["verdict"] == "not_supported"]
+        partial = [c for c in checked if c["verdict"] == "partially"]
+        seconds = state.get("faith_seconds", 0) + time.time() - start
+        update = {"faith_seconds": round(seconds, 2), "faith_again": False, "usage": usage}
+        if state.get("faith_round", 0) == 0:
+            issues = [{"claim": plain(c["text"]), "reason": c["reason"], "by": c["by"], "excerpt": c["excerpt"]}
+                      for c in bad + partial]
+            update.update({"claims_checked": len(checked), "claims_unsupported": len(bad),
+                           "claims_partial": len(partial), "claims_fixed": 0, "claims_unresolved": len(bad),
+                           "faith_issues": issues})
+            if bad:
+                lines = ["- «%s» - %s. В источнике: %s" % (plain(c["text"]), c["reason"] or "нет в источнике", c["excerpt"])
+                         for c in bad]
+                update.update({"faith_round": 1, "faith_again": True,
+                               "faith_feedback": prompts.FAITH_FEEDBACK.format(items="\n".join(lines))})
+            return update
+        # второй проход: что не исправилось, остаётся без ссылки и с предупреждением
+        update["claims_fixed"] = max(0, state["claims_unsupported"] - len(bad))
+        update["claims_unresolved"] = len(bad)
+        if bad:
+            text = drop_markers(state["answer"], bad)
+            names = "; ".join(plain(c["text"])[:150] for c in bad)
+            update["answer"] = text + "\n\n" + prompts.FAITH_WARNING + names
+        return update
 
     g = StateGraph(State)
     g.add_node("retrieve", retrieve)
@@ -363,11 +459,13 @@ def build_graph(llm, tools):
     g.add_node("refuse", refuse)
     g.add_node("answer", answer)
     g.add_node("verify", verify)
+    g.add_node("faithfulness", faithfulness)
     g.set_entry_point("retrieve")
     g.add_edge("retrieve", "grade")
     g.add_conditional_edges("grade", after_grade, ["retrieve", "answer", "web", "refuse"])
     g.add_conditional_edges("web", after_web, ["answer", "refuse"])
     g.add_edge("refuse", END)
     g.add_edge("answer", "verify")
-    g.add_conditional_edges("verify", after_verify, {"answer": "answer", "end": END})
+    g.add_conditional_edges("verify", after_verify, {"answer": "answer", "faithfulness": "faithfulness", "end": END})
+    g.add_conditional_edges("faithfulness", after_faith, {"answer": "answer", "end": END})
     return g.compile()
