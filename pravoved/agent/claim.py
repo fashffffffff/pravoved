@@ -76,9 +76,11 @@ class ClaimSession:
         f = self.fields
         today = date.today().isoformat()
         if f["kind"] == "consumer_penalty":
+            kind = "prepaid_delivery" if f.get("prepaid_delivery") is True else "goods_defect"
             res = await call_tool(self.tools, "calc_consumer_penalty", {
-                "price": float(f["price"]), "due_date": f["due_date"], "actual_date": f.get("actual_date") or today})
-            return res.get("penalty"), res.get("breakdown", "")
+                "price": float(f["price"]), "due_date": f["due_date"], "actual_date": f.get("actual_date") or today,
+                "kind": kind})
+            return res.get("penalty"), "%s (%s)" % (res.get("breakdown", ""), res.get("legal_basis", ""))
         if f["kind"] == "salary_delay":
             res = await call_tool(self.tools, "calc_salary_delay", {
                 "amount": float(f["price"]), "due_date": f["due_date"], "paid_date": f.get("actual_date") or today})
@@ -88,11 +90,12 @@ class ClaimSession:
     async def draft(self):
         f = self.fields
         amount, breakdown = await self.calculate()
-        if amount:
-            sum_text = "%s руб." % amount
-            f["demand"] = f["demand"].rstrip(".") + ". Сумма по расчёту: " + sum_text
-        else:
-            sum_text = "%s руб." % f["price"]
+        sum_text = "%s руб" % f["price"]
+        if amount and f["kind"] == "salary_delay":
+            f["demand"] = f["demand"].rstrip(".") + ". Компенсация по ст. 236 ТК РФ на сегодня: %s руб." % amount
+        elif amount:
+            sum_text = "%s руб" % amount
+            f["demand"] = f["demand"].rstrip(".") + ". Сумма неустойки по расчёту: " + sum_text + "."
         args = {"kind": f["kind"], "sender_name": f["sender_name"], "sender_address": f["sender_address"],
                 "sender_phone": f.get("sender_phone") or "", "recipient": f["recipient"],
                 "recipient_address": f["recipient_address"], "facts": f["facts"], "demand": f["demand"],
@@ -111,9 +114,9 @@ class ClaimSession:
         self.waiting_calendar = True
         reply = "Претензия готова: %s\n\n%s" % (res["path"], res["preview"])
         if amount:
-            reply += "\n\nСумма посчитана калькулятором: %s" % sum_text
+            reply += "\n\nСумма посчитана калькулятором: %s руб" % amount
         reply += ("\n\nСрок ответа - %d дней, до %s (если вручить претензию сегодня). "
-                  "Добавить этот срок в календарь? (да/нет)" % (ANSWER_DAYS, self.deadline))
+                  "Добавить этот срок в календарь? (да/нет)" % (ANSWER_DAYS, date.fromisoformat(self.deadline).strftime("%d.%m.%Y")))
         return {"text": reply, "path": res["path"]}
 
     async def calendar_step(self, text):
