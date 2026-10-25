@@ -86,7 +86,7 @@ def test_drop_markers_only_in_bad_claims():
 # узел faithfulness целиком, с поддельной моделью
 
 class Hit(SimpleNamespace):
-    pass
+    section = ""
 
 
 class FakeLlm:

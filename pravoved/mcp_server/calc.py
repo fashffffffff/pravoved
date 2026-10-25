@@ -31,11 +31,14 @@ def money(x) -> Decimal:
     return Decimal(x).quantize(KOPECK, rounding=ROUND_HALF_UP)
 
 
-def penalty(price, days: int, kind: str, paid=None) -> dict:
+def penalty(price, days: int, kind: str, paid=None, grace_days: int = 0) -> dict:
     if kind not in PENALTY_KINDS:
         raise ValueError(f"неизвестный kind: {kind}, допустимо: {', '.join(PENALTY_KINDS)}")
     if days < 0:
         raise ValueError("days не может быть отрицательным")
+    # grace_days - срок, который закон даёт на исполнение (10 дней по ст. 22); неустойка идёт только за дни сверх него
+    all_days = days
+    days = max(days - grace_days, 0)
     price = Decimal(str(price))
     share, basis, cap_note = PENALTY_KINDS[kind]
     # потолок - уплаченная сумма, а если её не передали, то цена
@@ -43,6 +46,8 @@ def penalty(price, days: int, kind: str, paid=None) -> dict:
     raw = money(price * share * days)
     total = min(raw, cap)
     breakdown = f"{price} x {share * 100}% x {days} дн. = {raw}"
+    if grace_days:
+        breakdown = f"{all_days} дн. - {grace_days} дн. на исполнение = {days} дн.; " + breakdown
     if raw > total:
         breakdown += f"; {cap_note} ({cap}), поэтому {total}"
     return {

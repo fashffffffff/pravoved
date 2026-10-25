@@ -10,7 +10,10 @@ from langchain_core.messages import HumanMessage, SystemMessage, ToolMessage
 from langgraph.graph import END, StateGraph
 
 from pravoved.agent import prompts
+from pravoved.agent.cards import card_hits, pick_cards
+from pravoved.agent.clean import drop_repeats, strip_marks
 from pravoved.agent.faith import drop_markers, mismatch_reason, number_mismatch, pick_excerpt, plain, split_claims
+from pravoved.agent.situation import describe, filter_hits
 from pravoved.agent.tools import DOC_TOOLS, WEB_TOOLS
 from pravoved.agent.verify import check_citations, only_unverified, strip_unverified, unbacked_numbers, unverified_cited
 from pravoved.corpus.meta import corpus_date
@@ -22,10 +25,12 @@ MAX_SOURCES = 10
 MAX_TOOL_STEPS = 5
 MAX_CLAIMS = 15
 SNIPPET = 1500
-WEB_SNIPPET = 3500
+WEB_SNIPPET = 4500
 MAX_WEB_PAGES = 3
 MAX_WEB_TRIES = 5
 SITES = " site:consultant.ru OR site:pravo.gov.ru OR site:garant.ru"
+# практические страницы: порядок, сроки, документы
+SITES_PRACTICAL = " site:consultant.ru OR site:garant.ru OR site:nalog.gov.ru OR site:gosuslugi.ru OR site:pravo.gov.ru"
 # если среди результатов нет ни одного надёжного сайта, ищем ещё раз только по официальным
 SITES_ALL = (" site:consultant.ru OR site:garant.ru OR site:pravo.gov.ru OR site:rospotrebnadzor.ru"
              " OR site:rostrud.gov.ru")
@@ -35,6 +40,8 @@ CALC_WORDS = re.compile(r"ключев\w* ставк|неустойк|до ка�
 QUESTION_MONEY = re.compile(r"\d\s*(?:₽|руб|р\.|тыс)", re.IGNORECASE)
 QUESTION_TIME = re.compile(r"\d+\s*(?:дн|календарн|рабоч|недел|месяц)|\d{1,2}\s+(?:январ|феврал|март|апрел|ма[яй]|июн|июл|август|сентябр|октябр|ноябр|декабр)|\d{1,2}\.\d{2}\.\d{4}", re.IGNORECASE)
 QUESTION_ASK = re.compile(r"сколько|посчита|рассчита|подсчита|размер", re.IGNORECASE)
+# модель отказывается отвечать, хотя инструмент вернул результат
+GAVE_UP = re.compile(r"не могу (?:ответить|дать ответ|помочь)|невозможно ответить", re.IGNORECASE)
 # уголовное право вне базы, веб для него не нужен: отказываем сразу
 CRIMINAL_WORDS = re.compile(r"уголовн|\bУК\b|кражу|краже|убийств|преступлен|мошенничеств", re.IGNORECASE)
 # вопросы про свежие изменения и штрафы: локальная база их не знает, идём в интернет
@@ -52,6 +59,9 @@ class State(TypedDict, total=False):
     out_of_scope: bool
     legal: bool
     need_web: bool
+    situation: str
+    dropped: list
+    cards: list
     web_sources: list
     unverified_cited: int
     unbacked_numbers: int
@@ -85,7 +95,8 @@ def hit_key(h):
 
 def format_source(i, h):
     part = ", ч. " + h.part if h.part else ""
-    return "[%d] %s%s. %s\n%s" % (i, h.citation, part, h.title, h.text[:SNIPPET])
+    section = " (%s)" % h.section if h.section else ""
+    return "[%d] %s%s. %s%s\n%s" % (i, h.citation, part, h.title, section, h.text[:SNIPPET])
 
 
 def format_web_source(i, w):
@@ -195,6 +206,10 @@ def verify(state):
     unbacked = unbacked_numbers(text, "\n".join(backing))
     if unbacked:
         warnings.append("Проверьте цифры: " + ", ".join(unbacked) + " - их нет в источниках и расчётах.")
+    text, unconfirmed = strip_marks(text)
+    text = drop_repeats(text)
+    if unconfirmed:
+        warnings.append("Не нашли в источниках: " + ", ".join(unconfirmed) + ". Эти упоминания проверьте сами.")
     update = {"answer": text, "sources": sources, "cited": cited, "invalid": invalid, "again": False,
               "unverified_cited": unverified, "unbacked_numbers": len(unbacked)}
     if warnings:
@@ -215,6 +230,7 @@ def build_graph(llm, tools):
         old = state.get("hits", [])
         seen = {hit_key(h) for h in old}
         new = [h for h in search(query, k=8) if hit_key(h) not in seen]
+        new = filter_hits(new, state.get("situation", ""))[0]
         # новые найденные ставим после старых, лишнее отрезаем
         return {"hits": (old + new)[:MAX_SOURCES]}
 
@@ -239,8 +255,11 @@ def build_graph(llm, tools):
         elif CRIMINAL_WORDS.search(state["question"]):
             out, enough, legal = True, False, False
         need_web = legal and not calc and bool(WEB_WORDS.search(state["question"]))
+        situation = str(data.get("situation") or "").strip()
+        kept, dropped = filter_hits(hits, situation)
         update = {"enough": enough, "retry": False, "out_of_scope": out, "legal": legal, "need_web": need_web,
-                  "where": str(data.get("where") or ""), "usage": usage}
+                  "where": str(data.get("where") or ""), "usage": usage, "situation": situation,
+                  "hits": kept, "dropped": [h.citation for h in dropped]}
         new_query = str(data.get("query") or "").strip()
         if not enough and not out and state.get("retries", 0) < MAX_RETRIES and new_query:
             update["queries"] = state["queries"] + [new_query]
@@ -285,7 +304,7 @@ def build_graph(llm, tools):
         queries, usage = await web_queries(question)
         # плюс вариант с официальными сайтами - поисковик часто ставит их выше
         found = {}
-        for q in queries + [queries[0] + SITES]:
+        for q in queries + [queries[0] + SITES_PRACTICAL]:
             for r in (await call_json("web_search", {"query": q, "max_results": 6})).get("results", []):
                 found.setdefault(r["url"], r)
         if all(r["trust"] == "unverified" for r in found.values()):
@@ -315,6 +334,9 @@ def build_graph(llm, tools):
     async def answer(state):
         hits = state["hits"]
         web_sources = state.get("web_sources", [])
+        cards = [] if state.get("out_of_scope") else pick_cards(state["question"], state.get("situation", ""))
+        have = {hit_key(h) for h in hits}
+        hits = hits + [h for h in card_hits(cards) if hit_key(h) not in have]
         base = corpus_date()
         base_date = prompts.BASE_DATE.format(date=base.strftime("%d.%m.%Y")) if base else ""
         system = prompts.ANSWER_SYSTEM.format(today=date.today().strftime("%d.%m.%Y"), base_date=base_date)
@@ -325,6 +347,8 @@ def build_graph(llm, tools):
         if state.get("strict"):
             system += prompts.STRICT_ADD
         user = prompts.ANSWER_USER.format(sources=source_list(hits, web_sources), question=state["question"])
+        for card in cards:
+            user += prompts.CARD_ADD.format(title=card["title"], text=card["text"])
         if state.get("history"):
             user += prompts.HISTORY_ADD.format(history=state["history"])
         if state.get("faith_feedback"):
@@ -340,7 +364,14 @@ def build_graph(llm, tools):
                 usage += usage2
                 if calls2:
                     text, calls = text2, calls2
-        return {"answer": text, "tool_calls": calls, "usage": usage}
+        if calls and GAVE_UP.search(text):
+            # инструмент ответил, а модель всё равно отказывается: просим ответить по его результату
+            got = "\n".join("%s: %s" % (c["name"], c["result"]) for c in calls)
+            text2, _, usage2 = await tool_loop(msgs + [HumanMessage(prompts.USE_TOOL_NUDGE.format(result=got))], False)
+            usage += usage2
+            if text2 and not GAVE_UP.search(text2):
+                text = text2
+        return {"answer": text, "tool_calls": calls, "usage": usage, "hits": hits, "cards": [c["name"] for c in cards]}
 
     async def tool_loop(msgs, force):
         calls = []
@@ -387,9 +418,10 @@ def build_graph(llm, tools):
     def after_faith(state):
         return "answer" if state["faith_again"] else "end"
 
-    async def judge(pairs, question, tool_text):
+    async def judge(pairs, question, tool_text, situation=""):
         # одним запросом: пары (утверждение, выдержка) -> {номер пары: (вердикт, причина)}
-        known = prompts.FAITH_KNOWN.format(question=question, calc=tool_text[:1500] or "нет")
+        known = prompts.FAITH_KNOWN.format(question=question, situation=situation or "не определена",
+                                           calc=tool_text[:1500] or "нет")
         items = known + "\n\n".join("%d. Утверждение: %s\nИсточник: %s" % (i, claim, excerpt)
                                     for i, (claim, excerpt) in enumerate(pairs, 1))
         t = time.time()
@@ -408,6 +440,7 @@ def build_graph(llm, tools):
         hits = state["hits"]
         web_sources = state.get("web_sources", [])
         texts = {i: h.text for i, h in enumerate(hits, 1)}
+        sections = {i: " (раздел: %s)" % h.section for i, h in enumerate(hits, 1) if h.section}
         texts.update({i: w["text"] for i, w in enumerate(web_sources, len(hits) + 1)})
         tool_text = "\n".join(c["result"] for c in state["tool_calls"])
         checked, to_ask = [], []
@@ -416,7 +449,7 @@ def build_graph(llm, tools):
             if not cited:
                 continue
             source = "\n".join(texts[n] for n in cited)
-            c["excerpt"] = "\n".join("[%d] %s" % (n, pick_excerpt(texts[n], c["text"])) for n in cited)
+            c["excerpt"] = "\n".join("[%d]%s %s" % (n, sections.get(n, ""), pick_excerpt(texts[n], c["text"])) for n in cited)
             c["verdict"], c["reason"], c["by"] = "supported", "", "rules"
             problems = number_mismatch(c["text"], source + "\n" + tool_text + "\n" + state["question"])
             if problems:
@@ -427,7 +460,7 @@ def build_graph(llm, tools):
         usage = []
         if to_ask:
             verdicts, usage = await judge([(plain(c["text"]), c["excerpt"]) for c in to_ask],
-                                       state["question"], tool_text)
+                                       state["question"], tool_text, describe(state.get("situation", "")))
             for i, c in enumerate(to_ask, 1):
                 verdict, reason = verdicts.get(i, ("supported", ""))
                 if verdict in ("not_supported", "partially"):

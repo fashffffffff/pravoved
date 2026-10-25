@@ -44,7 +44,7 @@ def get_key_rate(date: str | None = None) -> dict:
 @mcp.tool()
 def calc_consumer_penalty(price: float, days: int | None = None, kind: str = "goods_defect",
                           due_date: str | None = None, actual_date: str | None = None,
-                          paid: float | None = None) -> dict:
+                          paid: float | None = None, grace_days: int = 0) -> dict:
     """Неустойка по Закону о защите прав потребителей.
     price - цена товара/услуги в рублях (для prepaid_delivery - сумма предоплаты).
     days - число дней просрочки, если оно известно из вопроса. Если в вопросе даты, передай вместо days:
@@ -55,13 +55,15 @@ def calc_consumer_penalty(price: float, days: int | None = None, kind: str = "go
     paid - сколько потребитель реально заплатил за товар, если отличается от price (например, часть цены или
     со скидкой): с 01.02.2026 неустойка по ст. 23 п. 1 не может быть больше уплаченной суммы (ФЗ № 500-ФЗ).
     Без paid потолком считается price.
+    grace_days - дни, которые закон даёт продавцу на исполнение (10 дней на возврат денег по ст. 22): они вычитаются
+    из days, неустойка считается только за дни сверх срока. По умолчанию 0.
     kind: goods_defect - 1% в день (ст. 23 п. 1), prepaid_delivery - 0,5% в день, не более суммы предоплаты (ст. 23.1 п. 3),
     service_delay - 3% в день, не более цены услуги (ст. 28 п. 5)."""
     if days is None:
         if not (due_date and actual_date):
             raise ValueError("нужно указать days или due_date и actual_date")
         days = (date.fromisoformat(actual_date) - date.fromisoformat(due_date)).days
-    return calc.penalty(price, days, kind, paid)
+    return calc.penalty(price, days, kind, paid, grace_days)
 
 
 @mcp.tool()
