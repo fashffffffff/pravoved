@@ -9,7 +9,7 @@
   <script>
     document.documentElement.dataset.theme = localStorage.getItem("theme") || "dark";
     document.documentElement.dataset.palette = "steel";
-    document.documentElement.dataset.bg = localStorage.getItem("bg") || "10";
+    document.documentElement.dataset.bg = localStorage.getItem("bg") || "1";
   </script>
   <link rel="stylesheet" href="style.css">
 </head>
@@ -48,9 +48,8 @@
     </nav>
     <div class="tools">
       <select id="bg" class="pick" aria-label="Вариант фона (временно, для выбора)">
-        <option value="1">1 Чистый</option><option value="2">2 Штриховка</option><option value="3">3 Гильош</option>
-        <option value="4">4 Розетка</option><option value="5">5 Микротекст</option><option value="6">6 Ромбы</option>
-        <option value="7">7 Аркада</option><option value="8">8 Меандр</option><option value="9">9 Полутон</option><option value="10">10 Печать</option>
+        <option value="1">1 Чистый</option><option value="2">2 Лавр</option><option value="3">3 Фриз</option>
+        <option value="4">4 Каннелюры</option><option value="5">5 Весы</option><option value="6">6 Мрамор</option><option value="7">7 Храм</option>
       </select>
       <button id="new-chat" class="tool" type="button" title="Начать новый диалог"><svg class="i"><use href="#i-plus"/></svg><span>Новый диалог</span></button>
       <button id="theme" class="tool" type="button" aria-label="Сменить тему" title="Сменить тему"><svg class="i"><use href="#i-theme"/></svg></button>
