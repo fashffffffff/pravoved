@@ -23,6 +23,18 @@ def rules_points(text):
     return set(POINT_BEFORE.findall(text)) | set(POINT_AFTER.findall(text))
 
 
+def normalize_markers(text):
+    """«[9, ч. 1 п. 3]» и «[11, ст. 18; 4, ст. 475]» -> «[9]» и «[11, 4]»: оставляем только номера источников"""
+    def fix(m):
+        inner = m.group(1)
+        if not re.search(r"[а-яё]", inner, re.IGNORECASE):
+            return m.group(0)
+        # номера после «ст.», «ч.», «п.» - не номера источников, берём только первое число до «;» или запятой с текстом
+        nums = re.findall(r"(?:^|;\s*)(\d+)", inner)
+        return "[%s]" % ", ".join(nums) if nums else m.group(0)
+    return re.sub(r"\[(\d[^\]]*)\]", fix, text)
+
+
 def check_citations(answer, sources, tool_text="", n_web=0):
     """sources - список Hit в том порядке, как они пронумерованы в промпте, дальше идут n_web веб-источников
     (их номера [len(sources)+1 ...] тоже считаются существующими).
@@ -44,7 +56,7 @@ def check_citations(answer, sources, tool_text="", n_web=0):
                 invalid += 1
         return "[%s]" % ", ".join(good) if good else ""
 
-    text = MARKER.sub(fix_marker, answer)
+    text = MARKER.sub(fix_marker, normalize_markers(answer))
 
     # статьи по номеру: должны быть в найденных источниках (или в ответе инструмента) и существовать в базе
     allowed = {s.article for s in sources if s.law not in POINT_LAWS and get_article(s.law, s.article)}

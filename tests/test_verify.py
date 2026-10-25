@@ -260,3 +260,10 @@ def test_only_unverified_cited_is_regenerated():
            {"trust": "unverified", "text": "текст", "url": "https://blog.example", "title": "блог"}]
     res = verify({"answer": "Так пишут [2].", "hits": [], "web_sources": web, "tool_calls": [], "question": "в"})
     assert res["again"] and res["strict"]
+
+
+def test_normalize_markers():
+    from pravoved.agent.verify import normalize_markers
+    assert normalize_markers("а [9, ч. 1 п. 3] б [1, ст. 25, ч. 1].") == "а [9] б [1]."
+    assert normalize_markers("[11, ст. 18, ч. 1; 4, ст. 475, ч. 2]") == "[11, 4]"
+    assert normalize_markers("уже верно [2, 5] и [3]") == "уже верно [2, 5] и [3]"
