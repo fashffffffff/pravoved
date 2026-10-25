@@ -72,13 +72,52 @@ def token_value(tokens):
     return norm_num(next(iter(found))) if found else ""
 
 
-def quantities(text):
+COMPOUND = re.compile(r"([а-яё]*?)(дневн|месячн|недельн|летн)\w*$")
+COMPOUND_UNITS = {"дневн": "day", "месячн": "month", "недельн": "week", "летн": "year"}
+# «в течение месяца», «не менее года»: без числа это один месяц, один год
+ONE = {"месяц": "month", "месяца": "month", "год": "year", "года": "year", "неделя": "week", "недели": "week",
+       "день": "day", "дня": "day"}
+
+
+def number_runs(tokens):
+    runs, run = [], []
+    for t in tokens:
+        if is_number_token(t):
+            run.append(t)
+        elif run:
+            runs.append(run)
+            run = []
+    if run:
+        runs.append(run)
+    return runs
+
+
+def quantities(text, lenient=False):
     """Сроки и проценты из текста. -> {(единица, значение): как написано}.
-    Годы переводятся в месяцы, недели в дни: «один год» и «12 месяцев» - одно и то же."""
+    Годы переводятся в месяцы, недели в дни: «один год» и «12 месяцев» - одно и то же.
+    lenient - для текста источника: берём и числа в скобках, и «месяца» как один месяц."""
     tokens = re.findall(r"\d+(?:[.,]\d+)?|[а-яё]+|%", text.lower())
     found = {}
+
+    def add(unit, value, phrase):
+        if not value:
+            return
+        number = Decimal(value)
+        if unit == "year":
+            # «2026 года» - это дата, а не срок
+            if number >= 100:
+                return
+            unit, number = "month", number * 12
+        elif unit == "week":
+            unit, number = "day", number * 7
+        found[(unit, norm_num(str(number)))] = phrase
+
+    last_unit = -1
     for i, tok in enumerate(tokens):
         unit = unit_of(tok)
+        compound = COMPOUND.match(tok)
+        if compound and not unit:
+            unit = COMPOUND_UNITS[compound.group(2)]
         if not unit:
             continue
         j = i - 1
@@ -87,30 +126,32 @@ def quantities(text):
         k = j
         while k >= 0 and is_number_token(tokens[k]):
             k -= 1
-        if unit == "percent" and j >= 0 and tokens[j].startswith("половин"):
-            value = "0.5"
+        phrase = " ".join(tokens[max(k + 1, 0):i + 1])
+        if compound and not unit_of(tok):
+            # «десятидневный» и «10-дневный»
+            if compound.group(1) in SMALL:
+                add(unit, token_value([compound.group(1)]), tok)
+            elif k < j:
+                add(unit, token_value(tokens[k + 1:j + 1]), phrase)
+            elif lenient:
+                add(unit, "1", tok)
+        elif unit == "percent" and j >= 0 and tokens[j].startswith("половин"):
+            add(unit, "0.5", phrase)
         elif k < j:
-            value = token_value(tokens[k + 1:j + 1])
-        else:
-            continue
-        if not value:
-            continue
-        number = Decimal(value)
-        if unit == "year":
-            # «2026 года» - это дата, а не срок
-            if number >= 100:
-                continue
-            unit, number = "month", number * 12
-        elif unit == "week":
-            unit, number = "day", number * 7
-        found[(unit, norm_num(str(number)))] = " ".join(tokens[max(k + 1, 0):i + 1])
+            add(unit, token_value(tokens[k + 1:j + 1]), phrase)
+        elif lenient and tok in ONE:
+            add(unit, "1", tok)
+        if lenient:
+            for run in number_runs(tokens[max(last_unit + 1, i - 15):i]):
+                add(unit, token_value(run), phrase)
+        last_unit = i
     return found
 
 
 def number_mismatch(claim, backing):
     """Сроки и проценты из утверждения, которых нет в тексте источников.
     -> [(как в утверждении, что есть в источнике для той же величины)]"""
-    have = quantities(backing)
+    have = quantities(backing, lenient=True)
     bad = []
     for (unit, value), phrase in quantities(claim).items():
         if (unit, value) in have:

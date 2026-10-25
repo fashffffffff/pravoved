@@ -387,10 +387,11 @@ def build_graph(llm, tools):
     def after_faith(state):
         return "answer" if state["faith_again"] else "end"
 
-    async def judge(pairs):
+    async def judge(pairs, question, tool_text):
         # одним запросом: пары (утверждение, выдержка) -> {номер пары: (вердикт, причина)}
-        items = "\n\n".join("%d. Утверждение: %s\nИсточник: %s" % (i, claim, excerpt)
-                             for i, (claim, excerpt) in enumerate(pairs, 1))
+        known = prompts.FAITH_KNOWN.format(question=question, calc=tool_text[:1500] or "нет")
+        items = known + "\n\n".join("%d. Утверждение: %s\nИсточник: %s" % (i, claim, excerpt)
+                                    for i, (claim, excerpt) in enumerate(pairs, 1))
         t = time.time()
         msg = await llm.ainvoke([SystemMessage(prompts.FAITH_SYSTEM), HumanMessage(items)])
         data = parse_json(strip_think(msg.content)) or {}
@@ -425,7 +426,8 @@ def build_graph(llm, tools):
             checked.append(c)
         usage = []
         if to_ask:
-            verdicts, usage = await judge([(plain(c["text"]), c["excerpt"]) for c in to_ask])
+            verdicts, usage = await judge([(plain(c["text"]), c["excerpt"]) for c in to_ask],
+                                       state["question"], tool_text)
             for i, c in enumerate(to_ask, 1):
                 verdict, reason = verdicts.get(i, ("supported", ""))
                 if verdict in ("not_supported", "partially"):

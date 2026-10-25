@@ -164,3 +164,23 @@ def test_faith_flag(monkeypatch):
     assert faith_enabled()
     monkeypatch.setenv("FAITH_CHECK", "false")
     assert not faith_enabled()
+
+
+def test_compound_and_implicit_terms_in_source():
+    assert number_mismatch("Устранить в течение 10 дней", "в десятидневный срок со дня заявления") == []
+    assert number_mismatch("Ответ в 10-дневный срок", "в течение десяти дней") == []
+    assert number_mismatch("Ответ в течение 1 месяца", "замена проводится в течение месяца со дня") == []
+    assert number_mismatch("Договор на срок один год", "заключенного на срок не менее года") == []
+    assert number_mismatch("Срок два года", "в десятидневный срок") != []
+
+
+def test_numbers_in_parentheses_belong_to_the_unit():
+    src = "продолжительностью 70 (в случае многоплодной беременности - 84) календарных дней до родов"
+    assert number_mismatch("70 календарных дней до родов", src) == []
+    assert number_mismatch("84 календарных дня до родов", src) == []
+    assert number_mismatch("100 календарных дней до родов", src) != []
+
+
+def test_number_from_question_is_ok():
+    assert number_mismatch("Гарантия 2 года", "срок два года", ) == []
+    assert number_mismatch("Гарантия 5 лет", "срок два года\nгарантия была 1 год") != []
