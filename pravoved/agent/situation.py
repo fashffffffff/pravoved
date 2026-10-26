@@ -9,6 +9,7 @@ SITUATIONS = {
     "trud": "обычные трудовые отношения: зарплата, увольнение, отпуск, дисциплина",
     "trud_osobyj": "особая категория работника, названная в вопросе: беременная, до 18 лет, руководитель, совместитель, вахта, сезонный, надомник, дистанционный, педагог, иностранец",
     "trud_sever": "работа в районах Крайнего Севера или приравненных местностях, названных в вопросе",
+    "grazhdane": "сделка между двумя частными лицами (покупка у человека по объявлению, заём у знакомого): ЗоЗПП не применяется",
     "drugoe": "всё остальное (заём, дарение, купля-продажа между гражданами, не по этой базе)",
 }
 
@@ -36,13 +37,19 @@ def fits(regime, situation):
     return situation in ALLOWED.get(regime, {situation})
 
 
+# нормы только для потребителя и бизнеса
+CONSUMER_LAWS = {"zozpp", "plenum17", "pp657", "pp924"}
+
+
 def filter_hits(hits, situation):
     """-> (подходящие, отброшенные). Мягкие разделы идут в конец, жёстко неподходящие отбрасываются."""
     if situation not in SITUATIONS or situation == "drugoe":
         return hits, []
     good, soft, dropped = [], [], []
     for h in hits:
-        if h.regime in SOFT and not fits(h.regime, situation):
+        if situation == "grazhdane" and h.law in CONSUMER_LAWS:
+            dropped.append(h)
+        elif h.regime in SOFT and not fits(h.regime, situation):
             soft.append(h)
         elif fits(h.regime, situation):
             good.append(h)
@@ -51,6 +58,8 @@ def filter_hits(hits, situation):
     # если отбросили всё, лучше оставить как было
     if not good and not soft:
         return hits, []
+    # прокат: его нормы идут первыми
+    good.sort(key=lambda h: h.regime != "prokat")
     return good + soft, dropped
 
 

@@ -6,7 +6,7 @@ import time
 from datetime import date
 from typing import Annotated, TypedDict
 
-from langchain_core.messages import HumanMessage, SystemMessage, ToolMessage
+from langchain_core.messages import AIMessage, HumanMessage, SystemMessage, ToolMessage
 from langgraph.graph import END, StateGraph
 
 from pravoved.agent import prompts
@@ -14,6 +14,8 @@ from pravoved.agent.cards import card_hits, pick_cards
 from pravoved.agent.clean import drop_repeats, strip_marks
 from pravoved.agent.faith import drop_markers, mismatch_reason, number_mismatch, pick_excerpt, plain, split_claims
 from pravoved.agent.llm import make_llm
+from pravoved.agent.plan import (HEAD_SYSTEM, HEAD_USER, PLAN_FEEDBACK, PLAN_SYSTEM, PLAN_USER, SPLIT_SYSTEM, clean_plan,
+                                 format_plan, missing_items)
 from pravoved.agent.situation import describe, filter_hits
 from pravoved.agent.tools import DOC_TOOLS, WEB_TOOLS
 from pravoved.agent.verify import check_citations, only_unverified, strip_unverified, unbacked_numbers, unverified_cited
@@ -23,6 +25,8 @@ from pravoved.retrieval.search import search
 
 MAX_RETRIES = 2
 MAX_SOURCES = 10
+MAX_SOURCES_MULTI = 12
+PER_QUERY = 6
 MAX_TOOL_STEPS = 5
 MAX_CLAIMS = 15
 SNIPPET = 1500
@@ -53,6 +57,11 @@ class State(TypedDict, total=False):
     question: str
     history: str
     queries: list
+    subqueries: list
+    plan: dict
+    plan_checked: bool
+    plan_missing: int
+    head_contradiction: bool
     hits: list
     retries: int
     enough: bool
@@ -226,15 +235,45 @@ def build_graph(llm, tools):
     llm_forced = answer_llm.bind_tools(answer_tools, tool_choice="required") if answer_tools else None
     web_on = web_enabled() and WEB_TOOLS <= set(tools_by_name)
     faith_on = faith_enabled()
+    multi_on = env_flag("MULTIQ")
+    plan_on = env_flag("PLAN")
+    head_on = env_flag("HEADCHK")
 
-    def retrieve(state):
+    async def split_query(question):
+        msg = await llm.ainvoke([SystemMessage(SPLIT_SYSTEM), HumanMessage(question)])
+        data = parse_json(strip_think(msg.content)) or {}
+        subs = [str(q).strip() for q in data.get("queries", []) if str(q).strip()][:3]
+        return subs, [usage_of(msg, 0)]
+
+    def merge_lists(lists):
+        # по кругу берём лучшие из каждого списка, чтобы в контекст попали статьи по каждому подвопросу
+        out, seen = [], set()
+        for i in range(max(len(x) for x in lists)):
+            for lst in lists:
+                if i < len(lst) and hit_key(lst[i]) not in seen:
+                    seen.add(hit_key(lst[i]))
+                    out.append(lst[i])
+        return out
+
+    async def retrieve(state):
         query = state["queries"][-1]
         old = state.get("hits", [])
         seen = {hit_key(h) for h in old}
-        new = [h for h in search(query, k=8) if hit_key(h) not in seen]
+        update = {}
+        if multi_on and not old:
+            subs, usage = await split_query(query)
+            update["subqueries"], update["usage"] = subs, usage
+            lists = [search(q, k=PER_QUERY) for q in [query] + subs]
+            found = merge_lists(lists)
+            limit = MAX_SOURCES_MULTI
+        else:
+            found = search(query, k=8)
+            limit = MAX_SOURCES
+        new = [h for h in found if hit_key(h) not in seen]
         new = filter_hits(new, state.get("situation", ""))[0]
         # новые найденные ставим после старых, лишнее отрезаем
-        return {"hits": (old + new)[:MAX_SOURCES]}
+        update["hits"] = (old + new)[:limit]
+        return update
 
     async def grade(state):
         hits = state["hits"]
@@ -349,6 +388,11 @@ def build_graph(llm, tools):
         if state.get("strict"):
             system += prompts.STRICT_ADD
         user = prompts.ANSWER_USER.format(sources=source_list(hits, web_sources), question=state["question"])
+        plan, plan_usage = state.get("plan"), []
+        if plan_on and plan is None and not needs_calc(state["question"]) and (hits or web_sources):
+            plan, plan_usage = await make_plan(state, hits, web_sources)
+        if plan:
+            user += format_plan(plan)
         for card in cards:
             user += prompts.CARD_ADD.format(title=card["title"], text=card["text"])
         if state.get("history"):
@@ -358,6 +402,11 @@ def build_graph(llm, tools):
         msgs = [SystemMessage(system), HumanMessage(user)]
         force = needs_calc(state["question"])
         text, calls, usage = await tool_loop(list(msgs), force)
+        usage = plan_usage + usage
+        update = {}
+        if plan and not calls and not state.get("plan_checked"):
+            text, extra, update = await check_plan(plan, text, msgs)
+            usage += extra
         if not calls:
             # в ответе есть цифры, которых нет в источниках и вопросе, а инструмент не вызывали
             backing = state["question"] + "\n" + source_list(hits, web_sources)
@@ -373,7 +422,54 @@ def build_graph(llm, tools):
             usage += usage2
             if text2 and not GAVE_UP.search(text2):
                 text = text2
-        return {"answer": text, "tool_calls": calls, "usage": usage, "hits": hits, "cards": [c["name"] for c in cards]}
+        update.update({"answer": text, "tool_calls": calls, "usage": usage, "hits": hits,
+                       "cards": [c["name"] for c in cards]})
+        if plan:
+            update["plan"] = plan
+        return update
+
+    async def make_plan(state, hits, web_sources):
+        texts = {i: h.text for i, h in enumerate(hits, 1)}
+        texts.update({i: w["text"] for i, w in enumerate(web_sources, len(hits) + 1)})
+        user = PLAN_USER.format(sources=source_list(hits, web_sources), situation=describe(state.get("situation", "")) or "не определена",
+                                question=state["question"])
+        t = time.time()
+        msg = await llm.ainvoke([SystemMessage(PLAN_SYSTEM), HumanMessage(user)])
+        usage = [usage_of(msg, time.time() - t)]
+        data = parse_json(strip_think(msg.content))
+        if data is None:
+            return None, usage
+        return clean_plan(data, texts), usage
+
+    async def head_contradicts(plan, text):
+        t = time.time()
+        user = HEAD_USER.format(answer=text, conclusion=plan["conclusion"] or "нет")
+        msg = await llm.ainvoke([SystemMessage(HEAD_SYSTEM), HumanMessage(user)])
+        data = parse_json(strip_think(msg.content)) or {}
+        return bool(data.get("contradiction")), str(data.get("reason") or ""), [usage_of(msg, time.time() - t)]
+
+    async def check_plan(plan, text, msgs):
+        # пункты плана, которых нет в тексте, и противоречие первой строки телу: одна переписка
+        usage = []
+        missing = missing_items(plan, text)
+        contradiction, reason = False, ""
+        if head_on:
+            contradiction, reason, usage = await head_contradicts(plan, text)
+        update = {"plan_checked": True, "plan_missing": len(missing), "head_contradiction": contradiction}
+        items = []
+        if missing:
+            items.append("В ответе не сказано: " + "; ".join(missing) + ".")
+        if contradiction:
+            items.append("Первая строка противоречит остальному ответу: %s. Сделай вывод в первой строке таким, как в обосновании."
+                         % reason)
+        if not items:
+            return text, usage, update
+        msgs2 = msgs + [AIMessage(text), HumanMessage(PLAN_FEEDBACK.format(items="\n".join(items)))]
+        text2, _, usage2 = await tool_loop(msgs2, False)
+        usage += usage2
+        if text2 and (not missing or len(missing_items(plan, text2)) <= len(missing)):
+            text = text2
+        return text, usage, update
 
     async def tool_loop(msgs, force):
         calls = []
