@@ -8,7 +8,10 @@
 {"from": "gk:480", "to": "gk:478", "type": "refers_to"}
 {"from": "gk:480", "to": "gk:479", "type": "refers_to"}
 {"from": "gk:482", "to": "gk:475", "type": "refers_to"}
+{"from": "gk:486", "to": "gk:395", "type": "refers_to"}
+{"from": "gk:487", "to": "gk:395", "type": "refers_to"}
 {"from": "gk:487", "to": "gk:457", "type": "refers_to"}
+{"from": "gk:488", "to": "gk:395", "type": "refers_to"}
 {"from": "gk:489", "to": "gk:488", "type": "refers_to"}
 {"from": "gk:500", "to": "gk:487", "type": "refers_to"}
 {"from": "gk:500", "to": "gk:488", "type": "refers_to"}
@@ -43,6 +46,7 @@
 {"from": "gk:683", "to": "gk:686", "type": "refers_to"}
 {"from": "gk:683", "to": "gk:687", "type": "refers_to"}
 {"from": "gk:809", "to": "gk:810", "type": "refers_to"}
+{"from": "gk:811", "to": "gk:395", "type": "refers_to"}
 {"from": "gk:811", "to": "gk:809", "type": "refers_to"}
 {"from": "gk:812", "to": "gk:808", "type": "refers_to"}
 {"from": "gk:813", "to": "gk:811", "type": "refers_to"}
@@ -98,6 +102,7 @@
 {"from": "plenum17:32", "to": "zozpp:28", "type": "explains"}
 {"from": "plenum17:32", "to": "zozpp:30", "type": "explains"}
 {"from": "plenum17:32", "to": "zozpp:31", "type": "explains"}
+{"from": "plenum17:34", "to": "gk:395", "type": "explains"}
 {"from": "plenum17:34", "to": "zozpp:23", "type": "explains"}
 {"from": "plenum17:34", "to": "zozpp:28", "type": "explains"}
 {"from": "plenum17:34", "to": "zozpp:30", "type": "explains"}

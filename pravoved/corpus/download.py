@@ -26,8 +26,8 @@ LAWS = {
     "pp924": ("121597", "sections"),
 }
 
-# какие статьи ГК берём: гл. 30 §1-2, гл. 32, гл. 34, гл. 35, гл. 42 §1
-GK_RANGES = [(454, 505), (572, 582), (606, 688), (807, 818)]
+# какие статьи ГК берём: сроки (191-193), проценты за просрочку (395), гл. 30 §1-2, гл. 32, гл. 34, гл. 35, гл. 42 §1
+GK_RANGES = [(191, 193), (395, 395), (454, 505), (572, 582), (606, 688), (807, 818)]
 
 # из КоАП нужны только статьи про штрафы продавцов и работодателей
 KOAP_ARTICLES = {"5.27", "5.27.1", "14.4", "14.5", "14.7", "14.8", "14.15"}
@@ -100,10 +100,17 @@ def edition_of(html):
     return m.group(1) if m else ""
 
 
+# статьи 191-193 и 395 лежат в первой части ГК, остальные нужные - во второй
+GK_PART1 = "5142"
+
+
 def download_articles(code, law_id):
     toc = get(BASE + law_id + "/")
     edition = edition_of(toc)
     links = article_links(toc, law_id)
+    if code == "gk":
+        part1 = article_links(get(BASE + GK_PART1 + "/"), GK_PART1)
+        links = {**{n: u for n, u in part1.items() if int(n.split(".")[0]) < 454}, **links}
     blocks = []
     latest = ""
     for num, url in links.items():
