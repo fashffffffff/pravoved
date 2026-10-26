@@ -74,12 +74,24 @@ def check_tool_case(case, res):
     return {"tool_ok": bool(calls), "args_ok": bool(calls) and args_match(case["args"], calls[0]["args"])}
 
 
+async def ask_retry(graph, question, tries=6):
+    # туннель до сервера иногда падает - ждём и пробуем ещё раз
+    for n in range(tries):
+        try:
+            return await ask(graph, question)
+        except Exception as e:
+            if "Connection" not in str(e) or n == tries - 1:
+                raise
+            print("  нет связи с моделью, жду 30 с")
+            await asyncio.sleep(30)
+
+
 async def run_all(graph, items, kind):
     out = []
     for i, item in enumerate(items, 1):
         print("[%s %d/%d] %s" % (kind, i, len(items), item["question"][:70]), flush=True)
         try:
-            res = await ask(graph, item["question"])
+            res = await ask_retry(graph, item["question"])
         except Exception as e:
             print("  ошибка:", e)
             res = {"error": str(e), "answer": "", "refused": False, "sources": [], "tool_calls": [],
